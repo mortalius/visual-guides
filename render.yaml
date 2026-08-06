@@ -1,0 +1,60 @@
+# Блюпринт Render: по отдельному статическому сайту на каждый гайд.
+#
+# Почему так, а не один сайт на всю репу: у каждого гайда свой домен/сабдомен и свой
+# независимый деплой - правка одного не роняет остальные.
+#
+# Ключевые моменты:
+#   rootDir            - папка гайда; staticPublishPath берётся относительно неё.
+#   staticPublishPath  - `.` : публикуется папка как есть, сборки нет и не должно появиться
+#                        (см. CONTRIBUTING.md §1 - принцип «без сборки»).
+#   buildCommand       - пустой. Не заполнять: любая команда здесь означает, что в серию
+#                        просочился тулчейн.
+#   buildFilter.paths  - ОБЯЗАТЕЛЬНО. Без него правка в одном гайде пересобирает все сайты.
+#                        Пути - от корня репозитория, не от rootDir.
+#
+# Кеш: короткий max-age на HTML (правки видны сразу), долгий на статику. Render
+# инвалидирует CDN при атомарном деплое, поэтому ручной ?v=N в разметке со временем можно
+# убрать - но пока он в коде гайда, бампайте его по инструкции в README гайда.
+#
+# Добавляете гайд - добавьте сюда сервис и строку в таблицу корневого README.md.
+
+services:
+  - type: web
+    name: envoy-gateway-guide
+    runtime: static
+    rootDir: envoy-gateway-visualization
+    buildCommand: ""
+    staticPublishPath: .
+    buildFilter:
+      paths:
+        - envoy-gateway-visualization/**
+    headers:
+      - path: /*.html
+        name: Cache-Control
+        value: public, max-age=300
+      - path: /*
+        name: Cache-Control
+        value: public, max-age=3600
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+
+  - type: web
+    name: traces-tempo-guide
+    runtime: static
+    rootDir: traces-tempo
+    buildCommand: ""
+    staticPublishPath: .
+    buildFilter:
+      paths:
+        - traces-tempo/**
+    headers:
+      - path: /*.html
+        name: Cache-Control
+        value: public, max-age=300
+      - path: /*
+        name: Cache-Control
+        value: public, max-age=3600
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
