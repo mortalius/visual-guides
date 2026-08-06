@@ -160,14 +160,32 @@ this repo routinely carries unpushed commits and pushing needs to be asked for, 
 one workflow where a push is part of the job. Raise it early.
 
 The pre-publication checklist (OG tags, 1200×627 preview, Post Inspector) is `CONTRIBUTING.md` §6;
-the step-by-step is the `publish-guide` skill. `envoy-gateway-visualization` has OG tags, a
-`og-preview.png` and a favicon, and is reserved at `envoy-gateway-guide.onrender.com` - not yet
-deployed, Post Inspector not yet run. `traces-tempo` still has no OG tags.
+the step-by-step is the `publish-guide` skill. Both guides are live:
+`envoy-gateway-guide.onrender.com` (OG tags, `og-preview.png`, favicon - Post Inspector not yet
+run) and `traces-tempo-guide.onrender.com`. **`traces-tempo` is live but unannounced** - it has no
+OG tags and still 404s on favicon, so nothing should link to it until it gets both.
+
+Blueprint services must be created **through the dashboard**, not the Render MCP:
+`create_static_site` accepts neither `rootDir` nor `buildFilter`, so a service made that way is not
+blueprint-managed and `render.yaml` silently becomes fiction. Dashboard → New Blueprint Instance
+reads `render.yaml` and creates every service in it at once. The MCP tools are for verifying
+afterwards (`list_services`, `list_deploys`) - and they need an explicit `workspaceId`: this
+account has two workspaces and the guides live in `Workspace1` (`tea-d9q95s61egvs73dhsad0`).
+
+An `onrender.com` host that 404s is **not** proof the name is free - Render answers its whole
+wildcard domain. Nothing reserves a subdomain until the service exists.
 
 ## Commits and safety
 
-- One logical change per commit. English message, imperative subject, body explaining why rather
-  than listing files. Do not mix a content edit with a styling rework.
+- One logical change per commit. Do not mix a content edit with a styling rework.
+- **The whole message is English, including the body** - subject and body both. Early commits in
+  this repo have Russian bodies; do not take them as the pattern. Only guide content and prose docs
+  are Russian.
+- **Keep it to a couple of lines.** Imperative subject under ~70 characters, then at most two or
+  three lines of body saying why. A commit whose body runs longer than the diff is a sign the
+  reasoning belongs in a doc - put it there and reference it instead.
+- The body explains why, not what. Never list the changed files: `git show --stat` already does.
+- Omit the body entirely when the subject says everything. A mechanical edit needs no essay.
 - **Do not push unless explicitly asked.** Unpushed commits in this repo are normal.
 - Internal technical briefs (`*_visualization.md`, `*_brief.md`) are gitignored: they contain
   private repository links and cluster names. **Never commit or publish them**, even when the edit
