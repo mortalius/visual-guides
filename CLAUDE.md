@@ -107,6 +107,26 @@ Rules that must not be broken by accident:
    in the registry at root `DESIGN.md` §6, with the reason. An unrecorded deviation is
    indistinguishable from carelessness.
 
+## Keep the process docs current
+
+**Any process fact discovered while deploying, publishing, or reviewing must land in `CLAUDE.md`
+or the relevant skill in `.claude/skills/` - in the same commit as the work that revealed it.**
+Not in a chat reply, not only in the guide's `TODO.md`. If a step was missing, wrong, or in the
+wrong order, fix the document that told you to do it that way.
+
+What counts: a prerequisite nobody wrote down (a key, a push, a DNS record), an order dependency
+that turned out to matter, a command that does not do what the doc claims, a count or path that
+drifted, a manual step that could be checked mechanically.
+
+Where it goes: repo-wide facts and invariants → `CLAUDE.md`. Step order and per-stage procedure →
+the skill (`new-guide`, `guide-review`, `publish-guide`). Content rules → `DESIGN.md`. Checklists →
+`CONTRIBUTING.md`. When unsure, prefer the skill: it is read at the moment the step is executed.
+
+Why this is a rule and not a nicety: this series has already watched documentation rot away from
+reality - a ban on a font removed long before was still in a `DESIGN.md`, and both guide READMEs
+miscounted their own cache-bust sites. A process fact learned and not written down will be
+rediscovered the hard way, and the next agent has no memory of this session.
+
 ## Traps
 
 - **SVG does not wrap text.** A long label silently overflows its node box. Do not trust your
@@ -118,7 +138,11 @@ Rules that must not be broken by accident:
   before swapping a family.
 - **Clarity limit of ≤7–9 elements** in view per diagram. Exceeding it means the cross-section
   should be split, not shrunk.
-- **`favicon.ico 404`** is the only console error that is acceptable.
+- **Console must be clean.** `favicon.ico 404` was the tolerated exception;
+  `envoy-gateway-visualization` now ships a favicon, so its bar is zero errors. tempo still 404s.
+- **The data globals are `const`, so they are not on `window`.** Reaching them from an injected
+  script or a Playwright `evaluate` needs the bare identifier (`PANELS`, `STEPS`, `MATRIX`), not
+  `window.PANELS` - which is `undefined` and throws on property access.
 
 ## Deployment
 
@@ -126,11 +150,17 @@ Rules that must not be broken by accident:
 `buildCommand: ""` + a **mandatory** `buildFilter.paths` (without it, editing one guide rebuilds
 every site). A new guide needs a service there and a row in the root `README.md` table.
 
-The folder is published as-is, so `README.md`, `DESIGN.md`, `TODO.md` and `font-explore.html` ship
-with the site. Never put anything sensitive in a guide folder.
+The folder is published as-is, so `README.md`, `DESIGN.md`, `TODO.md`, `font-explore.html` and
+`.mcp.json` ship with the site as reachable URLs. Never put anything sensitive in a guide folder.
 
-The pre-publication checklist (OG tags, 1200×627 preview, Post Inspector) is `CONTRIBUTING.md` §6.
-Both guides are currently undeployed and **have no OG tags** - that is the publishing blocker.
+**Render builds from GitHub, not from the working tree** - a local commit is invisible to it. Since
+this repo routinely carries unpushed commits and pushing needs to be asked for, publishing is the
+one workflow where a push is part of the job. Raise it early.
+
+The pre-publication checklist (OG tags, 1200×627 preview, Post Inspector) is `CONTRIBUTING.md` §6;
+the step-by-step is the `publish-guide` skill. `envoy-gateway-visualization` has OG tags, a
+`og-preview.png` and a favicon, and is reserved at `envoy-gateway-guide.onrender.com` - not yet
+deployed, Post Inspector not yet run. `traces-tempo` still has no OG tags.
 
 ## Commits and safety
 

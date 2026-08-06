@@ -52,15 +52,38 @@ Confirm the guide's service in `render.yaml`: `type: web`, `runtime: static`, `r
 `buildFilter` is **mandatory** - without it every guide rebuilds on any commit. `buildCommand` stays
 empty; any command there means a toolchain leaked into the series.
 
-Remember the folder publishes as-is: `README.md`, `DESIGN.md`, `TODO.md`, `font-explore.html` all
-become reachable URLs. Check nothing sensitive is in the folder before the first deploy.
+Remember the folder publishes as-is: `README.md`, `DESIGN.md`, `TODO.md`, `font-explore.html` and
+`.mcp.json` all become reachable URLs. List the folder and read anything you would not want served
+before the first deploy. `.mcp.json` is safe **only because** the key is an unexpanded
+`${RENDER_API_KEY}` placeholder - verify that is still true rather than assuming it.
 
 ## 4. Deploy
 
-The Render MCP server is configured in `envoy-gateway-visualization/.mcp.json` and reads
-`RENDER_API_KEY` from the environment - it is only picked up when the cwd is that folder. If the
-tools are unavailable, the key is not set; ask the user to set it rather than putting a key
-anywhere in the repo.
+Two prerequisites, both easy to discover too late. Check them **before** doing the OG work, so the
+user can act while you prepare the rest:
+
+1. **The commits must be pushed.** Render builds from the GitHub repo, not from the working tree -
+   a local commit is invisible to it. This repo routinely carries unpushed commits, and pushing
+   still requires asking. So publishing is the one workflow where a push is part of the job: raise
+   it early rather than at the end.
+2. **`RENDER_API_KEY` must be in the environment.** The MCP server in
+   `envoy-gateway-visualization/.mcp.json` expands it at **session start** and only when the cwd is
+   that folder - so `export`ing it mid-session does nothing. The user has to set it and restart
+   Claude Code from that directory. Say this explicitly; "set the key" alone leads to a restart
+   nobody expected.
+
+If the Render tools are absent from the tool list, the key was not set. Ask - never write a key
+anywhere in the repo, which publishes as-is.
+
+Check both with:
+
+```bash
+git status -sb | head -1                    # ahead/behind origin
+[ -n "$RENDER_API_KEY" ] && echo set || echo unset
+```
+
+The env check reflects your shell, not the MCP server's - the reliable signal is whether the Render
+tools exist at all.
 
 Deploying is outward-facing and creates public infrastructure: confirm with the user before
 triggering it, and confirm again before any custom-domain change - the domain ends up in the OG

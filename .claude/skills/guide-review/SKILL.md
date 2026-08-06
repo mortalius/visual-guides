@@ -31,9 +31,28 @@ A grep-based contract check is a legitimate substitute for a missing self-test; 
 contract is fine because the page looked normal is not. A broken `data-node` is invisible until
 someone clicks that exact node.
 
+Checking those contracts in the page is the most reliable route, since it sees the DOM after the
+layer partials are injected. **The data globals are `const`, so they are not on `window`** - refer
+to them by bare identifier (`PANELS`, not `window.PANELS`) or the evaluate call throws:
+
+```js
+() => {
+  const nodes = [...document.querySelectorAll('[data-node]')].map(n => n.dataset.node);
+  return {
+    missing: nodes.filter(n => !(n in PANELS)),                          // click → empty panel
+    dead: Object.keys(PANELS).filter(k => !nodes.includes(k)),           // content nobody can reach
+  };
+}
+```
+
+Aliases (`PANELS['p-x'] = PANELS.x`) make their target look "dead" - the target id has no node of
+its own. Verify against the alias list in the guide README before reporting one.
+
 ## 2. Browser pass
 
-Use Playwright MCP. Console must be clean - `favicon.ico 404` is the only acceptable error.
+Use Playwright MCP. Console must be clean. `favicon.ico 404` used to be the tolerated exception;
+`envoy-gateway-visualization` now ships a favicon, so for that guide the bar is **zero console
+errors**.
 
 Walk the guide's README checklist literally; it lists the interactions that have broken before.
 Beyond it, always:
