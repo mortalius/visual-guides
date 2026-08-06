@@ -1,0 +1,430 @@
+/* ============================================================
+   Путь трейса: обработка, фильтры и семплинг - styles
+   Theme: "Blueprint Journal" - light, high-contrast, colorful.
+   Shared with the envoy-gateway-visualization artifact: same base
+   surfaces, type system and card/edge language, so the two read
+   as one series. See DESIGN.md for the visual language.
+
+   Type system (all families ship Cyrillic - the UI is Russian):
+     Playfair Display - high-contrast editorial serif for display
+     Inter            - UI & body, and node labels inside SVG boxes
+     JetBrains Mono   - code, params, metrics, and ALL numbers
+
+   Accent contract (referenced across index.html/app.js/data.js).
+   NOTE this differs from the Envoy artifact on purpose: there the
+   accents mean "resource role", here they mean "fate of a trace".
+     --primary        (indigo)  logic / config keys / active UI
+     --accent-keep    (emerald) trace survived (sampled / stored)
+     --accent-drop    (rose)    trace lost (not sampled / limited)
+     --accent-warning (amber)   probabilistic / degraded / caveat
+   rose is SEMANTIC here, so .eyebrow is indigo and no --brand
+   token exists - see DESIGN.md §1.
+   Per-node hue lives in --na, assigned by [data-node] below.
+   Per-act hue lives in --act-hue, assigned by .wrap[data-act].
+   ============================================================ */
+:root{
+  /* base surfaces */
+  --bg-primary:#eaeef7;          /* page canvas */
+  --bg-surface:#ffffff;          /* cards / board / panel */
+  --bg-surface-2:#f3f6fc;        /* insets */
+  --bg-inset:#eef2fb;
+
+  /* borders */
+  --border:#dde3ef;              /* general hairline */
+  --border-faint:#e8ecf5;
+  --border-muted:#c9d2e2;
+  --border-2:#8c98b2;            /* medium - edges / arrow markers */
+
+  /* typography */
+  --text-primary:#141a2b;        /* near-black navy */
+  --text-secondary:#414a5f;
+  --text-muted:#78839c;
+  --text-3:#98a3ba;              /* faint - param labels / dimmed */
+
+  /* semantic accents - fate of a trace */
+  --primary:#4f46e5;             /* indigo - logic / config / active UI */
+  --primary-weak:rgba(79,70,229,.10);
+  --accent-keep:#0a9e63;         /* emerald - survived */
+  --accent-keep-weak:rgba(10,158,99,.12);
+  --accent-drop:#e11d48;         /* rose - lost */
+  --accent-drop-weak:rgba(225,29,72,.10);
+  --accent-warning:#b45309;      /* amber - probabilistic / degraded */
+  --accent-warning-weak:rgba(217,119,6,.12);
+
+  /* category hues (node role + act) */
+  --c-indigo:#4f46e5;
+  --c-blue:#2563eb;
+  --c-cyan:#0891b2;
+  --c-teal:#0d9488;
+  --c-emerald:#0a9e63;
+  --c-violet:#7c3aed;
+  --c-amber:#d97706;
+  --c-rose:#e11d48;
+  --c-fuchsia:#c026d3;
+
+  /* layout */
+  --radius:9px;
+  --radius-lg:14px;
+  --shadow:0 1px 2px rgba(20,26,43,.05),0 14px 34px -14px rgba(30,41,90,.22);
+  --shadow-sm:0 1px 2px rgba(20,26,43,.05),0 6px 16px -10px rgba(30,41,90,.2);
+
+  /* spacing (base 8px) */
+  --s-xs:8px; --s-sm:12px; --s-md:16px; --s-lg:24px; --s-xl:32px;
+
+  --font:"Inter",system-ui,-apple-system,Segoe UI,sans-serif;
+  --display:"Playfair Display",Georgia,"Times New Roman",serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+
+  --spring:cubic-bezier(.34,1.56,.64,1);
+  --ease:cubic-bezier(.4,0,.2,1);
+
+  --act-hue:var(--c-indigo);     /* overridden per act below */
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:var(--font);
+  color:var(--text-secondary);
+  background-color:var(--bg-primary);
+  background-image:
+    radial-gradient(circle at 12% -8%, rgba(79,70,229,.14), transparent 42%),
+    radial-gradient(circle at 92% 4%, rgba(10,158,99,.10), transparent 44%),
+    radial-gradient(circle at 60% 120%, rgba(225,29,72,.08), transparent 50%),
+    radial-gradient(circle at 1px 1px, rgba(72,86,120,.11) 1px, transparent 0);
+  background-size:auto,auto,auto,23px 23px;
+  background-attachment:fixed;
+  -webkit-font-smoothing:antialiased;
+  line-height:1.6;
+  font-size:16px;
+  min-height:100vh;
+}
+.wrap{max-width:1320px;margin:0 auto;padding:var(--s-xl) var(--s-lg) 72px;}
+
+/* custom scrollbars */
+*{scrollbar-width:thin;scrollbar-color:var(--border-muted) transparent;}
+*::-webkit-scrollbar{width:9px;height:9px;}
+*::-webkit-scrollbar-track{background:transparent;}
+*::-webkit-scrollbar-thumb{background:var(--border-muted);border-radius:999px;border:2px solid transparent;background-clip:padding-box;}
+*::-webkit-scrollbar-thumb:hover{background:var(--text-3);background-clip:padding-box;}
+
+/* ---------- Header ---------- */
+header.masthead{padding-bottom:var(--s-lg);margin-bottom:var(--s-lg);border-bottom:1px solid var(--border);}
+/* eyebrow is INDIGO here, not rose: rose is the "trace lost" semantic in this
+   artifact, and a rose eyebrow next to a diagram where rose = dropped traces
+   reads as a warning. See DESIGN.md §1. */
+.eyebrow{
+  font-family:var(--mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--primary);font-weight:500;display:flex;align-items:center;gap:10px;margin-bottom:var(--s-md);
+}
+.eyebrow::before{content:"";width:28px;height:3px;border-radius:3px;background:var(--primary);}
+h1{font-family:var(--display);font-size:clamp(1.4rem,2.93vw,2.27rem);font-weight:600;line-height:1.05;letter-spacing:-.015em;margin:0 0 6px;color:var(--text-primary);}
+/* Genre line under the title. Deliberately NOT Playfair: the display scale has
+   no tier below section level (DESIGN.md §2), so it steps down via family +
+   weight + color instead of a smaller serif size. */
+.subtitle{font-family:var(--font);font-size:clamp(15px,1.25vw,17px);font-weight:500;color:var(--primary);margin:0 0 var(--s-md);letter-spacing:-.005em;}
+.lede{font-size:16px;color:var(--text-secondary);max-width:74ch;margin:0;}
+.lede b{color:var(--text-primary);font-weight:600;}
+.lede code,.subtitle code{font-family:var(--mono);font-size:13.5px;background:var(--primary-weak);color:var(--primary);padding:1px 6px;border-radius:5px;border:1px solid color-mix(in srgb,var(--primary) 20%,transparent);}
+
+/* ---------- Act tabs (DESIGN.md §3.5) ---------- */
+/* Each tab carries its own act hue, so the nav doubles as the act legend. */
+.tabs{display:flex;gap:var(--s-md);margin:var(--s-lg) 0 var(--s-sm);flex-wrap:wrap;}
+.tab{
+  --tab-accent:var(--c-indigo);
+  appearance:none;cursor:pointer;background:var(--bg-surface);border:1px solid var(--border-muted);
+  border-radius:var(--radius-lg);padding:16px 20px 15px;text-align:left;font-family:var(--font);
+  flex:1 1 214px;min-width:214px;position:relative;overflow:hidden;box-shadow:var(--shadow-sm);
+  transition:transform 220ms var(--spring),border-color 200ms var(--ease),box-shadow 220ms var(--ease);
+}
+.tab::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--tab-accent);opacity:.35;transition:opacity 200ms var(--ease),width 200ms var(--ease);}
+.tab[data-act="birth"]{--tab-accent:var(--c-violet);}
+.tab[data-act="collector"]{--tab-accent:var(--c-indigo);}
+.tab[data-act="tempo"]{--tab-accent:var(--c-teal);}
+.tab[data-act="read"]{--tab-accent:var(--c-amber);}
+.tab .tab-idx{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;color:var(--text-muted);display:block;margin-bottom:6px;font-weight:500;}
+.tab .tab-title{font-family:var(--display);font-size:20px;font-weight:600;color:var(--text-primary);display:block;line-height:1.1;letter-spacing:-.01em;}
+.tab .tab-sub{font-size:12.5px;color:var(--text-secondary);display:block;margin-top:4px;}
+.tab:hover{transform:translateY(-3px);border-color:var(--tab-accent);box-shadow:var(--shadow);}
+.tab:hover::before{opacity:.7;}
+.tab[aria-selected="true"]{
+  border-color:var(--tab-accent);
+  background:color-mix(in srgb,var(--tab-accent) 6%,#fff);
+  box-shadow:0 0 0 1px var(--tab-accent),0 14px 30px -14px color-mix(in srgb,var(--tab-accent) 70%,transparent);
+}
+.tab[aria-selected="true"]::before{opacity:1;width:6px;}
+.tab[aria-selected="true"] .tab-idx{color:var(--tab-accent);}
+
+/* per-act hue, consumed by the lens nav + board rule */
+.wrap[data-act="birth"]{--act-hue:var(--c-violet);}
+.wrap[data-act="collector"]{--act-hue:var(--c-indigo);}
+.wrap[data-act="tempo"]{--act-hue:var(--c-teal);}
+.wrap[data-act="read"]{--act-hue:var(--c-amber);}
+
+/* ---------- Lens nav (second level) ---------- */
+.lenses{display:flex;gap:var(--s-xs);margin:0 0 var(--s-sm);flex-wrap:wrap;align-items:center;}
+.lens{
+  appearance:none;cursor:pointer;font-family:var(--font);font-size:13px;font-weight:500;
+  background:var(--bg-surface);color:var(--text-secondary);
+  border:1px solid var(--border-muted);border-radius:999px;padding:7px 15px;
+  box-shadow:var(--shadow-sm);transition:all 180ms var(--ease);
+}
+.lens:hover:not([aria-disabled="true"]):not([aria-selected="true"]){
+  border-color:var(--act-hue);color:var(--act-hue);transform:translateY(-1px);
+}
+/* Selected must win over :hover explicitly - otherwise the hover rule repaints
+   the label and the selected button goes blue-on-blue (DESIGN.md §3.13). */
+.lens[aria-selected="true"],
+.lens[aria-selected="true"]:hover{
+  background:var(--act-hue);border-color:var(--act-hue);color:#fff;font-weight:600;
+  box-shadow:0 8px 18px -8px var(--act-hue);
+}
+/* Dimmed lens: present but not applicable here. NO line-through - that reads as
+   "deleted", the meaning is "not applicable at this stage" (DESIGN.md §3.13). */
+.lens[aria-disabled="true"]{
+  cursor:not-allowed;color:var(--text-3);background:transparent;
+  border-style:dashed;border-color:var(--border-muted);box-shadow:none;
+}
+.lens-hint{font-family:var(--mono);font-size:11.5px;color:var(--text-muted);margin-left:4px;}
+
+/* ---------- Color legend ---------- */
+.color-key{display:flex;flex-wrap:wrap;gap:8px 18px;margin:var(--s-sm) 0 0;padding:12px 16px;background:var(--bg-surface);border:1px solid var(--border-muted);border-radius:var(--radius);box-shadow:var(--shadow-sm);font-size:12px;color:var(--text-secondary);}
+.color-key .ck-title{font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--text-muted);font-weight:700;width:100%;margin-bottom:2px;}
+.color-key .ck{display:inline-flex;align-items:center;gap:8px;}
+.color-key .ck::before{content:"";width:11px;height:11px;border-radius:3px;flex-shrink:0;background:var(--ck);border:1px solid color-mix(in srgb,var(--ck) 55%,#000);}
+.ck.source{--ck:var(--c-rose);}
+.ck.receive{--ck:var(--c-cyan);}
+.ck.process{--ck:var(--c-blue);}
+.ck.policy{--ck:var(--c-violet);}
+.ck.transport{--ck:var(--c-teal);}
+.ck.store{--ck:var(--c-emerald);}
+.ck.derived{--ck:var(--c-fuchsia);}
+
+/* ---------- Stage layout (asymmetric, DESIGN.md §3.1) ---------- */
+.stage{display:grid;grid-template-columns:1fr 400px;gap:var(--s-lg);align-items:start;margin-top:var(--s-lg);}
+.board{background:var(--bg-surface);border:1px solid var(--border-muted);border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:var(--s-lg);position:relative;overflow:hidden;min-width:0;}
+.board::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:linear-gradient(90deg,var(--act-hue),color-mix(in srgb,var(--act-hue) 40%,var(--c-emerald)),var(--c-emerald),var(--accent-warning),var(--accent-drop));opacity:.9;}
+.board-head{display:flex;align-items:baseline;justify-content:space-between;gap:var(--s-md);margin:4px 0 var(--s-sm);flex-wrap:wrap;}
+.board-head h2{font-family:var(--display);font-size:21px;font-weight:600;margin:0;letter-spacing:-.01em;color:var(--text-primary);}
+.board-head h2 code{font-family:var(--mono);font-size:16px;font-weight:500;color:var(--primary);}
+.board-head .hint{font-family:var(--mono);font-size:12px;color:var(--text-muted);}
+.board-lede{font-size:14px;color:var(--text-secondary);margin:0 0 var(--s-md);max-width:82ch;line-height:1.6;}
+.board-lede code,.hint code{font-family:var(--mono);font-size:12.5px;background:var(--primary-weak);color:var(--primary);padding:1px 5px;border-radius:4px;}
+
+.diagram-scroll{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;}
+svg.diagram{width:100%;height:auto;display:block;min-width:660px;}
+.lens-panel{animation:fadeUp 320ms var(--ease);}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:none;}}
+
+/* ---------- SVG nodes (DESIGN.md §3.2) ---------- */
+.node{--na:var(--primary);transform-box:fill-box;transform-origin:center;}
+.node .node-box{
+  fill:color-mix(in srgb,var(--na) 7%,#fff);
+  stroke:color-mix(in srgb,var(--na) 42%,var(--border-muted));
+  stroke-width:1.5;
+}
+.node-title{font-family:var(--font);font-size:13px;font-weight:600;fill:var(--text-primary);}
+.node-kind{font-family:var(--mono);font-size:10px;letter-spacing:.08em;font-weight:700;text-transform:uppercase;fill:var(--na);}
+.node-sub{font-family:var(--mono);font-size:10.5px;fill:var(--text-muted);}
+/* non-primary data flow: control plane / config / optional */
+.node.control .node-box{stroke-dasharray:5 4;fill:color-mix(in srgb,var(--na) 5%,#fff);}
+/* stateful node - holds a buffer in memory. Not decoration: half the
+   quantitative conclusions of this material are "stateful costs RAM",
+   so it has to be visible before the prose (DESIGN.md §3.2). */
+.node.stateful .node-box{stroke-width:2;stroke:var(--na);}
+.node.stateful .state-hatch{fill:none;stroke:var(--na);stroke-width:1;stroke-dasharray:2 3;opacity:.5;}
+.state-cost{font-family:var(--mono);font-size:9.5px;fill:var(--na);opacity:.9;}
+/* fate-coded node variants */
+.node.keep .node-box{--na:var(--accent-keep);}
+.node.drop .node-box{--na:var(--accent-drop);}
+.node.warn .node-box{--na:var(--accent-warning);}
+
+/* ---------- edges (DESIGN.md §3.3) ---------- */
+.edge path{fill:none;stroke-linecap:round;stroke:var(--border-2);stroke-width:1.8;}
+.edge-label{font-family:var(--mono);font-size:10.5px;font-weight:500;fill:var(--text-secondary);paint-order:stroke;stroke:var(--bg-surface);stroke-width:4;stroke-linejoin:round;}
+.edge.config path{stroke-dasharray:6 5;stroke:var(--text-3);}
+.edge.attach path{stroke:var(--primary);stroke-dasharray:4 4;}
+.edge.keep path{stroke:var(--accent-keep);}
+.edge.drop path{stroke:var(--accent-drop);}
+
+/* ---------- ribbons: variable-width flow (DESIGN.md §3.7) ---------- */
+/* Width scale is NON-linear (gamma) - linear width collapses small flows to an
+   invisible thread. Because widths are therefore NOT proportional, every ribbon
+   must carry its own printed number (.n-pct). Enforced in app.js. */
+.ribbon{stroke:none;}
+.ribbon.flow{fill:var(--primary);fill-opacity:.26;}
+.ribbon.keep{fill:var(--accent-keep);fill-opacity:.38;}
+.ribbon.drop{fill:var(--accent-drop);fill-opacity:.30;}
+.stage-bar{rx:2;}
+.stage-bar.flow{fill:var(--primary);fill-opacity:.62;}
+.stage-bar.keep{fill:var(--accent-keep);fill-opacity:.7;}
+
+/* numbers: mono + tabular-nums everywhere, so labels don't jitter under a
+   slider (DESIGN.md §2 "Числа - отдельный типографский класс") */
+.n-pct{font-family:var(--mono);font-size:11.5px;font-weight:700;font-variant-numeric:tabular-nums;fill:var(--text-primary);}
+.n-pct.keep{fill:var(--accent-keep);}
+.n-pct.drop{fill:var(--accent-drop);}
+.n-pct.warn{fill:var(--accent-warning);}
+.n-metric{font-family:var(--mono);font-size:10.5px;font-weight:700;fill:var(--accent-drop);}
+.n-tune{font-family:var(--mono);font-size:10px;fill:var(--text-muted);}
+.scale-note{font-family:var(--mono);font-size:10.5px;fill:var(--text-3);}
+.axis{stroke:var(--border-muted);stroke-width:1;}
+.axis-label{font-family:var(--mono);font-size:10px;font-variant-numeric:tabular-nums;fill:var(--text-muted);}
+.col-head{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;fill:var(--text-muted);font-weight:700;}
+
+/* ---------- timeline (DESIGN.md §3.9) ---------- */
+.band{fill:var(--primary);fill-opacity:.10;stroke:color-mix(in srgb,var(--primary) 30%,transparent);stroke-dasharray:3 3;}
+.band-label{font-family:var(--mono);font-size:10.5px;font-variant-numeric:tabular-nums;fill:var(--primary);font-weight:500;}
+.marker-line{stroke:var(--accent-drop);stroke-width:2;}
+.marker-label{font-family:var(--font);font-size:11.5px;font-weight:700;fill:var(--accent-drop);}
+.span-bar{fill:var(--primary);fill-opacity:.75;rx:2;}
+.span-bar.late{fill:var(--accent-warning);fill-opacity:.95;}
+.block-box{fill:var(--accent-keep);fill-opacity:.08;stroke:var(--accent-keep);stroke-width:1.2;}
+.block-box.frag{fill:var(--accent-warning);fill-opacity:.10;stroke:var(--accent-warning);stroke-dasharray:4 3;}
+.fate-swatch{rx:2;}
+
+/* ---------- decision matrix / resolver (DESIGN.md §3.10) ---------- */
+.vote rect{stroke-width:1.2;rx:3;}
+/* "no vote" is neutral grey, NOT rose: a policy abstaining is not a lost trace */
+.vote.no rect{fill:var(--bg-surface-2);stroke:var(--border);}
+.vote.no text{fill:var(--text-3);}
+.vote.yes rect{fill:var(--accent-keep-weak);stroke:var(--accent-keep);}
+.vote.prob rect{fill:var(--accent-warning-weak);stroke:var(--accent-warning);}
+.vote text{font-family:var(--mono);font-size:11px;font-weight:600;font-variant-numeric:tabular-nums;fill:var(--text-primary);text-anchor:middle;}
+.row-label{font-family:var(--font);font-size:12.5px;font-weight:600;fill:var(--text-primary);}
+.result-sep{stroke:var(--border-muted);stroke-dasharray:3 3;}
+
+/* ---------- legend under a diagram ---------- */
+.legend{display:flex;flex-wrap:wrap;gap:var(--s-xs) var(--s-lg);margin-top:var(--s-md);padding-top:var(--s-md);border-top:1px solid var(--border-faint);font-size:12.5px;color:var(--text-secondary);}
+.legend .lg{display:inline-flex;align-items:center;gap:9px;}
+.lg-line{width:28px;height:0;border-top:2px solid var(--border-2);border-radius:2px;flex-shrink:0;}
+.lg-line.keep{border-color:var(--accent-keep);}
+.lg-line.drop{border-color:var(--accent-drop);}
+.lg-line.cfg{border-top-style:dashed;border-color:var(--text-3);}
+.lg-line.attach{border-top-style:dashed;border-color:var(--primary);}
+.lg-sw{width:13px;height:13px;border-radius:3px;flex-shrink:0;background:var(--sw);border:1px solid color-mix(in srgb,var(--sw) 55%,#000);}
+.legend code{font-family:var(--mono);font-size:11px;background:var(--primary-weak);color:var(--primary);padding:1px 4px;border-radius:4px;}
+
+/* ---------- side panel: the lens console (DESIGN.md §3.6) ---------- */
+.side{position:sticky;top:var(--s-md);background:var(--bg-surface);border:1px solid var(--border-muted);border-radius:var(--radius-lg);box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden;max-height:calc(100vh - var(--s-xl));}
+.side-top{padding:var(--s-lg) var(--s-lg) var(--s-sm);background:linear-gradient(180deg,var(--bg-surface-2),transparent);}
+.side-kind{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.side-badge{font-family:var(--mono);font-size:10px;letter-spacing:.04em;text-transform:none;padding:3px 8px;border-radius:999px;background:color-mix(in srgb,var(--act-hue) 10%,#fff);color:var(--act-hue);border:1px solid color-mix(in srgb,var(--act-hue) 35%,transparent);}
+.side-title{font-family:var(--display);font-size:23px;font-weight:600;margin:10px 0 4px;letter-spacing:-.01em;color:var(--text-primary);line-height:1.15;}
+.side-body{padding:0 var(--s-lg) var(--s-lg);overflow-y:auto;flex:1;min-height:0;}
+.sect{margin-bottom:var(--s-lg);}
+.sect:last-child{margin-bottom:0;}
+.sect-h{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-secondary);margin:0 0 var(--s-sm);font-weight:700;display:flex;align-items:center;gap:10px;}
+.sect-h::after{content:"";flex:1;height:1px;background:var(--border-faint);}
+.side-body p{font-size:13.5px;line-height:1.6;margin:0 0 10px;}
+.side-body p:last-child{margin-bottom:0;}
+.side-body b,.side-body strong{color:var(--text-primary);font-weight:600;}
+.side-body code,.legend-tbl code{font-family:var(--mono);font-size:12px;background:var(--primary-weak);color:var(--primary);padding:1px 5px;border-radius:4px;border:1px solid color-mix(in srgb,var(--primary) 18%,transparent);}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:700;}
+.num.keep{color:var(--accent-keep);}
+.num.drop{color:var(--accent-drop);}
+.num.warn{color:var(--accent-warning);}
+
+/* role table inside the panel */
+.legend-tbl{border-collapse:collapse;font-size:12.5px;width:100%;}
+.legend-tbl td{padding:4px 0;vertical-align:top;color:var(--text-secondary);line-height:1.45;}
+.legend-tbl td.sw{width:24px;}
+.legend-tbl i{display:inline-block;width:12px;height:12px;border-radius:3px;background:var(--sw);border:1px solid color-mix(in srgb,var(--sw) 55%,#000);}
+
+/* ---------- knobs (DESIGN.md §3.11) ---------- */
+.knobs{margin:0;padding:0;border:0;}
+.knob{margin-bottom:var(--s-md);}
+.knob:last-child{margin-bottom:0;}
+.knob-label{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:12.5px;color:var(--text-secondary);}
+.knob-label .kn{font-weight:500;}
+.knob-label code{font-family:var(--mono);font-size:11px;background:var(--primary-weak);color:var(--primary);padding:1px 5px;border-radius:4px;}
+/* value is mono + tabular-nums: without it the number changes width as it
+   changes and the whole row twitches under the slider */
+.knob .val{font-family:var(--mono);font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--primary);white-space:nowrap;}
+.knob input[type=range]{width:100%;margin:5px 0 0;accent-color:var(--primary);}
+.knob .hint{font-family:var(--mono);font-size:10.5px;color:var(--text-muted);margin-top:2px;}
+
+/* toggle button (model switch) */
+.toggle{
+  appearance:none;cursor:pointer;width:100%;font-family:var(--font);font-size:12.5px;font-weight:600;
+  background:var(--bg-surface);border:1px solid var(--border-muted);border-radius:var(--radius);
+  padding:9px 13px;color:var(--text-secondary);box-shadow:var(--shadow-sm);transition:all 180ms var(--ease);
+  display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;
+}
+.toggle:hover{border-color:var(--primary);color:var(--primary);transform:translateY(-1px);}
+.toggle .tg-state{font-family:var(--mono);font-size:11px;padding:2px 8px;border-radius:999px;flex-shrink:0;}
+.toggle[aria-pressed="true"]{border-color:var(--accent-keep);}
+.toggle[aria-pressed="true"] .tg-state{background:var(--accent-keep-weak);color:var(--accent-keep);}
+.toggle[aria-pressed="false"]{border-color:var(--accent-warning);}
+.toggle[aria-pressed="false"] .tg-state{background:var(--accent-warning-weak);color:var(--accent-warning);}
+
+/* ---------- callouts (DESIGN.md §3.12) ---------- */
+.note{background:var(--primary-weak);border:1px solid color-mix(in srgb,var(--primary) 22%,transparent);border-left:3px solid var(--primary);border-radius:var(--radius);padding:12px 15px;font-size:13.5px;color:var(--text-secondary);line-height:1.6;margin:var(--s-md) 0 0;}
+.note b,.note strong{color:var(--text-primary);font-weight:600;}
+.note code{font-family:var(--mono);font-size:12px;background:#fff;color:var(--primary);padding:1px 5px;border-radius:4px;border:1px solid color-mix(in srgb,var(--primary) 20%,transparent);}
+.callout{background:var(--accent-warning-weak);border:1px solid color-mix(in srgb,var(--accent-warning) 30%,transparent);border-left:3px solid var(--accent-warning);border-radius:var(--radius);padding:12px 15px;font-size:13px;color:var(--accent-warning);line-height:1.55;margin:0 0 var(--s-md);}
+.callout b,.callout strong{font-weight:600;color:#92400e;}
+.callout code{font-family:var(--mono);font-size:12px;background:#fff;color:var(--accent-warning);padding:1px 5px;border-radius:4px;border:1px solid color-mix(in srgb,var(--accent-warning) 28%,transparent);}
+/* a caveat is about PRECISION, not risk - amber would give it false urgency */
+.caveat{background:transparent;border:1px dashed var(--border-muted);border-radius:var(--radius);padding:11px 14px;font-size:12.5px;color:var(--text-secondary);line-height:1.55;margin:0;}
+.caveat .cv-h{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);font-weight:700;display:block;margin-bottom:6px;}
+.caveat p{font-size:12.5px;margin:0 0 8px;}
+.caveat p:last-child{margin-bottom:0;}
+
+/* ---------- config block (DESIGN.md §3.14) ---------- */
+details.cfg{margin:0;}
+details.cfg summary{cursor:pointer;font-family:var(--mono);font-size:11.5px;letter-spacing:.04em;color:var(--primary);padding:6px 0;list-style:none;display:flex;align-items:center;gap:7px;}
+details.cfg summary::-webkit-details-marker{display:none;}
+details.cfg summary::before{content:"▸";font-size:10px;transition:transform 180ms var(--ease);}
+details.cfg[open] summary::before{transform:rotate(90deg);}
+details.cfg summary:hover{color:var(--text-primary);}
+.cfg-pre{
+  font-family:var(--mono);font-size:12px;line-height:1.7;background:#111830;color:#c3cde4;
+  border:1px solid #26304f;border-left:3px solid var(--primary);border-radius:var(--radius);
+  padding:13px 15px;overflow-x:auto;margin:6px 0 0;white-space:pre;tab-size:2;
+  font-variant-numeric:tabular-nums;box-shadow:inset 0 1px 0 rgba(255,255,255,.03),var(--shadow-sm);
+}
+.cfg-pre .yk{color:#8ab4ff;}
+.cfg-pre .v{color:#6ee7a8;}
+.cfg-pre .c{color:#69769c;font-style:italic;}
+
+/* ---------- placeholder for the next content wave ---------- */
+.placeholder{border:1px dashed var(--border-muted);border-radius:var(--radius-lg);padding:38px 28px;text-align:center;background:var(--bg-surface-2);}
+.placeholder h3{font-family:var(--display);font-size:19px;font-weight:600;color:var(--text-primary);margin:0 0 8px;}
+.placeholder p{font-size:13.5px;color:var(--text-muted);margin:0 auto;max-width:56ch;line-height:1.6;}
+.roadmap{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px;}
+.roadmap li{font-size:13px;display:flex;gap:9px;align-items:flex-start;line-height:1.45;}
+.roadmap .rm-m{font-family:var(--mono);flex-shrink:0;font-weight:700;}
+.roadmap li.done .rm-m{color:var(--accent-keep);}
+.roadmap li.todo{color:var(--text-muted);}
+.roadmap li.todo .rm-m{color:var(--text-3);}
+
+/* ---------- self-test banner (DESIGN.md §3.15) ---------- */
+#selftest{display:none;font-family:var(--mono);font-size:12px;line-height:1.65;border-radius:var(--radius-lg);padding:15px 18px;white-space:pre-wrap;margin:var(--s-lg) 0 0;box-shadow:var(--shadow-sm);}
+#selftest.pass{background:var(--accent-keep-weak);border:1px solid color-mix(in srgb,var(--accent-keep) 35%,transparent);color:#0a6b45;}
+#selftest.fail{background:var(--accent-drop-weak);border:1px solid color-mix(in srgb,var(--accent-drop) 35%,transparent);color:#9f1239;}
+#selftest b{font-weight:700;}
+
+/* ---------- footer ---------- */
+footer.foot{margin-top:var(--s-xl);padding-top:var(--s-md);border-top:1px solid var(--border);font-size:12px;color:var(--text-muted);font-family:var(--mono);display:flex;flex-direction:column;gap:8px;}
+footer.foot .versions{display:flex;flex-wrap:wrap;gap:6px 14px;}
+footer.foot .versions span{display:inline-flex;align-items:center;gap:7px;background:var(--bg-surface);border:1px solid var(--border-muted);border-radius:999px;padding:4px 13px;box-shadow:var(--shadow-sm);}
+footer.foot .versions span::before{content:"";width:7px;height:7px;border-radius:50%;flex-shrink:0;background:var(--sw,var(--text-3));}
+footer.foot b{color:var(--text-primary);font-weight:600;}
+footer.foot .foot-note{color:var(--text-3);max-width:96ch;line-height:1.6;font-family:var(--font);font-size:12.5px;}
+
+/* ---------- responsive (DESIGN.md §3.1) ---------- */
+@media (max-width:1120px){
+  .stage{grid-template-columns:1fr;}
+  .side{position:static;max-height:none;}
+}
+@media (max-width:680px){
+  .wrap{padding:var(--s-lg) var(--s-md) 56px;}
+  .tabs{gap:var(--s-sm);}
+  .tab{flex:1 1 100%;min-width:0;}
+  .board{padding:var(--s-md);}
+  h1{font-size:clamp(1.13rem,4.67vw,1.47rem);}
+  /* h1 shrinks here, so shrink the subtitle with it - otherwise the two lines
+     land within a few px of each other and the hierarchy reads flat */
+  .subtitle{font-size:13.5px;}
+}

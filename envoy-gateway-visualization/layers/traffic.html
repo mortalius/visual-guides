@@ -1,0 +1,97 @@
+      <div class="layer-panel" id="panel-traffic" role="tabpanel">
+        <div class="board-head">
+          <h2>Путь трафика и конфигурация</h2>
+          <span class="hint">Зелёный - пройденный путь · пунктир - конфигурация (не трафик)</span>
+        </div>
+        <div class="diagram-scroll">
+        <svg class="diagram stepping" viewBox="0 0 960 560" role="img" aria-label="Схема пути трафика">
+          <defs>
+            <marker id="ar-data" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+              <path d="M0.5,0.5 L9,5 L0.5,9.5" fill="none" stroke="var(--border-2)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+          </defs>
+
+          <g class="edge config" id="edge-xds"><path d="M580,150 C580,185 580,215 580,242"/><text class="edge-label" x="592" y="200" text-anchor="start">xDS gRPC</text></g>
+
+          <g class="edge data" id="t1" data-step="1"><path d="M192,300 C214,300 226,300 246,300" marker-end="url(#ar-data)"/><text class="edge-label" x="219" y="288" text-anchor="middle">1</text><circle class="flow-dot" r="4"><animateMotion dur="1.3s" repeatCount="indefinite" path="M192,300 L246,300"/></circle></g>
+          <g class="edge data" id="t2" data-step="2"><path d="M424,300 C446,300 458,300 476,300" marker-end="url(#ar-data)"/><text class="edge-label" x="450" y="288" text-anchor="middle">2</text><circle class="flow-dot" r="4"><animateMotion dur="1.3s" repeatCount="indefinite" path="M424,300 L476,300"/></circle></g>
+          <g class="edge data" id="t3" data-step="3"><path d="M580,368 C580,400 580,424 580,448" marker-end="url(#ar-data)"/><text class="edge-label" x="594" y="412" text-anchor="start">3 · L7</text><circle class="flow-dot" r="4"><animateMotion dur="1.3s" repeatCount="indefinite" path="M580,368 L580,448"/></circle></g>
+          <g class="edge data" id="t4" data-step="4"><path d="M684,492 C706,492 718,492 736,492" marker-end="url(#ar-data)"/><text class="edge-label" x="710" y="480" text-anchor="middle">4</text><circle class="flow-dot" r="4"><animateMotion dur="1.3s" repeatCount="indefinite" path="M684,492 L736,492"/></circle></g>
+
+          <g class="node control" data-node="t-controller" tabindex="0" role="button" aria-label="Envoy Gateway Controller">
+            <rect class="glow-ring" x="467" y="63" width="226" height="84" rx="10"/>
+            <rect class="node-box" x="470" y="66" width="220" height="78" rx="8"/>
+            <text class="node-kind" x="490" y="94">CONTROL PLANE</text>
+            <text class="node-title" x="490" y="116">Envoy Gateway Controller</text>
+            <text class="node-sub" x="490" y="134">транслирует CRD в xDS</text>
+          </g>
+          <g class="node dp" data-node="t-client" data-step="1" tabindex="0" role="button" aria-label="Client">
+            <rect class="glow-ring" x="39" y="255" width="156" height="90" rx="10"/>
+            <rect class="node-box" x="42" y="258" width="150" height="84" rx="8"/>
+            <text class="node-kind" x="62" y="286">CLIENT</text>
+            <text class="node-title" x="62" y="312">Клиент</text>
+            <text class="node-sub" x="62" y="330">браузер / сервис</text>
+          </g>
+          <g class="node dp" data-node="t-nlb" data-step="1" tabindex="0" role="button" aria-label="AWS NLB">
+            <rect class="glow-ring" x="243" y="255" width="184" height="90" rx="10"/>
+            <rect class="node-box" x="246" y="258" width="178" height="84" rx="8"/>
+            <text class="node-kind" x="266" y="286">AWS NLB · L4</text>
+            <text class="node-title" x="266" y="312">Load Balancer</text>
+            <text class="node-sub" x="266" y="330">Service type LB</text>
+          </g>
+          <g class="node dp" data-node="t-envoy" data-step="2" tabindex="0" role="button" aria-label="Envoy Proxy Pods">
+            <rect class="glow-ring" x="477" y="241" width="206" height="130" rx="10"/>
+            <rect class="node-box" x="480" y="244" width="200" height="124" rx="8"/>
+            <text class="node-kind" x="500" y="272">DATA PLANE</text>
+            <text class="node-title" x="500" y="298">Envoy Proxy Pods</text>
+            <text class="node-sub" x="500" y="316">Deployment (managed)</text>
+            <rect class="pod" x="500" y="330" width="36" height="24" rx="5"/>
+            <rect class="pod" x="544" y="330" width="36" height="24" rx="5"/>
+            <rect class="pod" x="588" y="330" width="36" height="24" rx="5"/>
+          </g>
+          <!-- TLS termination marker on the Envoy edge (data-plane) -->
+          <g class="tls-marker" id="tls-marker" aria-hidden="true">
+            <rect x="600" y="228" width="86" height="24" rx="12"/>
+            <text x="643" y="244" text-anchor="middle">TLS terminate</text>
+          </g>
+          <g class="node dp" data-node="t-backendsvc" data-step="3" tabindex="0" role="button" aria-label="Backend Service">
+            <rect class="glow-ring" x="477" y="449" width="210" height="86" rx="10"/>
+            <rect class="node-box" x="480" y="452" width="204" height="80" rx="8"/>
+            <text class="node-kind" x="500" y="480">SERVICE</text>
+            <text class="node-title" x="500" y="506">Backend Service</text>
+            <text class="node-sub" x="500" y="524">ClusterIP · endpoints</text>
+          </g>
+          <g class="node dp" data-node="t-backendpods" data-step="4" tabindex="0" role="button" aria-label="Backend Pods">
+            <rect class="glow-ring" x="733" y="439" width="188" height="106" rx="10"/>
+            <rect class="node-box" x="736" y="442" width="182" height="100" rx="8"/>
+            <text class="node-kind" x="756" y="470">PODS</text>
+            <text class="node-title" x="756" y="496">Backend Pods</text>
+            <rect class="pod" x="756" y="510" width="36" height="22" rx="5"/>
+            <rect class="pod" x="800" y="510" width="36" height="22" rx="5"/>
+          </g>
+        </svg>
+        </div>
+        <div class="legend">
+          <span class="lg"><span class="lg-line green"></span> прямой путь запроса</span>
+          <span class="lg"><span class="lg-line amber"></span> обратный путь (ответ)</span>
+          <span class="lg"><span class="lg-line cfg"></span> конфигурация по xDS (не трафик)</span>
+        </div>
+        <div class="stepper">
+          <div class="progress-head">
+            <span style="font-size:13px;font-weight:600;">Прохождение запроса</span>
+            <span class="p-count" id="p-count">Шаг 0 / 4</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" id="p-fill"></div></div>
+          <div class="step-nav">
+            <button class="step-dot nav" data-nav="prev" aria-label="Назад">‹</button>
+            <button class="step-dot" data-step="0" aria-pressed="true">обзор</button>
+            <button class="step-dot" data-step="1" aria-pressed="false">1</button>
+            <button class="step-dot" data-step="2" aria-pressed="false">2</button>
+            <button class="step-dot" data-step="3" aria-pressed="false">3</button>
+            <button class="step-dot" data-step="4" aria-pressed="false">4</button>
+            <button class="step-dot resp" data-step="5" aria-pressed="false" title="Ответ">5 ↩</button>
+            <button class="step-dot nav" data-nav="next" aria-label="Далее">›</button>
+          </div>
+          <div class="step-caption" id="step-caption"></div>
+        </div>
+      </div>

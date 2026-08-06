@@ -1,0 +1,180 @@
+      <div class="layer-panel" id="panel-policies" role="tabpanel">
+        <div class="board-head">
+          <h2>Где применяется каждая политика</h2>
+          <button class="cp-toggle" id="cp-toggle" aria-pressed="true" aria-label="Скрыть control plane">
+            <span class="cp-toggle-icon">-</span> control plane
+          </button>
+        </div>
+        <div class="diagram-scroll">
+        <svg class="diagram cp-shown" viewBox="0 0 1040 600" role="img" aria-label="Схема применения политик вдоль пути трафика">
+          <defs>
+            <marker id="ar-p" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+              <path d="M0.5,0.5 L9,5 L0.5,9.5" fill="none" stroke="var(--border-2)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+            <marker id="ar-at" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+              <path d="M0.5,0.5 L9,5 L0.5,9.5" fill="none" stroke="var(--primary)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+          </defs>
+
+          <!-- CONTROL PLANE band (collapsible, shown by default) -->
+          <g class="cp-band">
+            <text class="node-kind" x="30" y="26" fill="var(--text-3)">CONTROL PLANE · КОНФИГУРАЦИЯ</text>
+            <g class="node control" data-node="p-envoyproxy" tabindex="0" role="button" aria-label="EnvoyProxy">
+              <rect class="glow-ring" x="27" y="35" width="216" height="66" rx="10"/>
+              <rect class="node-box" x="30" y="38" width="210" height="60" rx="8"/>
+              <text class="node-kind" x="46" y="62">ENVOYPROXY</text>
+              <text class="node-title" x="46" y="84" style="font-size:13px;">инфраструктура прокси</text>
+            </g>
+            <g class="node control" data-node="p-controller" tabindex="0" role="button" aria-label="Controller">
+              <rect class="node-box" x="415" y="38" width="210" height="60" rx="8"/>
+              <text class="node-kind" x="431" y="62">CONTROLLER</text>
+              <text class="node-title" x="431" y="84" style="font-size:14px;">генерация xDS</text>
+            </g>
+            <g class="node control" data-node="p-envoypatchpolicy" tabindex="0" role="button" aria-label="EnvoyPatchPolicy">
+              <rect class="glow-ring" x="797" y="35" width="216" height="66" rx="10"/>
+              <rect class="node-box" x="800" y="38" width="210" height="60" rx="8"/>
+              <text class="node-kind" x="816" y="62">ENVOYPATCHPOLICY</text>
+              <text class="node-title" x="816" y="84" style="font-size:14px;">патчит xDS</text>
+            </g>
+            <!-- envoyproxy provisions envoy; patchpolicy patches generated config -->
+            <g class="edge config"><path d="M240,68 C320,68 350,68 415,68" marker-end="url(#ar-cfg)"/></g>
+            <g class="edge config"><path d="M800,68 C720,68 690,68 625,68" marker-end="url(#ar-cfg)"/><text class="edge-label" x="712" y="58" text-anchor="middle">JSONPatch</text></g>
+            <g class="edge config"><path d="M120,98 C120,150 200,190 262,214" marker-end="url(#ar-cfg)"/><text class="edge-label" x="150" y="170" text-anchor="middle">provisions</text></g>
+            <line x1="30" y1="122" x2="1010" y2="122" stroke="var(--border)" stroke-width="1" stroke-dasharray="3 4"/>
+          </g>
+          <text class="node-kind" x="30" y="150" fill="var(--text-3)">DATA PLANE · ПУТЬ ЗАПРОСА</text>
+
+          <!-- TRAFFIC SPINE -->
+          <g class="edge"><path d="M170,250 C186,250 194,250 210,250" marker-end="url(#ar-p)"/></g>
+          <g class="edge"><path d="M340,250 C356,250 364,250 380,250" marker-end="url(#ar-p)"/></g>
+          <g class="edge"><path d="M510,250 C526,250 534,250 550,250" marker-end="url(#ar-p)"/></g>
+          <g class="edge"><path d="M680,250 C696,250 704,250 720,250" marker-end="url(#ar-p)"/></g>
+          <g class="edge"><path d="M850,250 C866,250 874,250 890,250" marker-end="url(#ar-p)"/></g>
+
+          <g class="node" data-node="p-client" tabindex="0" role="button" aria-label="Client">
+            <rect class="node-box" x="30" y="216" width="140" height="68" rx="8"/>
+            <text class="node-kind" x="46" y="240">CLIENT</text>
+            <text class="node-title" x="46" y="262" style="font-size:14px;">Клиент</text>
+          </g>
+          <g class="node" data-node="p-edge" tabindex="0" role="button" aria-label="Listener / edge">
+            <rect class="node-box" x="210" y="216" width="130" height="68" rx="8"/>
+            <text class="node-kind" x="226" y="240">LISTENER</text>
+            <text class="node-title" x="226" y="262" style="font-size:13.5px;">Client edge</text>
+          </g>
+          <g class="node" data-node="p-request" tabindex="0" role="button" aria-label="Request processing">
+            <rect class="node-box" x="380" y="216" width="130" height="68" rx="8"/>
+            <text class="node-kind" x="396" y="240">ENVOY</text>
+            <text class="node-title" x="396" y="262" style="font-size:13.5px;">Обработка</text>
+          </g>
+          <g class="node" data-node="p-routing" tabindex="0" role="button" aria-label="Routing">
+            <rect class="node-box" x="550" y="216" width="130" height="68" rx="8"/>
+            <text class="node-kind" x="566" y="240">ROUTE</text>
+            <text class="node-title" x="566" y="262" style="font-size:13.5px;">Маршрут</text>
+          </g>
+          <g class="node" data-node="p-upstream" tabindex="0" role="button" aria-label="Upstream">
+            <rect class="node-box" x="720" y="216" width="130" height="68" rx="8"/>
+            <text class="node-kind" x="736" y="240">UPSTREAM</text>
+            <text class="node-title" x="736" y="262" style="font-size:13.5px;">К backend</text>
+          </g>
+          <g class="node" data-node="p-backend" tabindex="0" role="button" aria-label="Backend">
+            <rect class="node-box" x="890" y="216" width="120" height="68" rx="8"/>
+            <text class="node-kind" x="906" y="240">BACKEND</text>
+            <text class="node-title" x="906" y="262" style="font-size:13.5px;">Backend</text>
+          </g>
+
+          <!-- POLICY CARDS + attachment connectors -->
+          <!-- ClientTrafficPolicy -> edge -->
+          <g class="edge attach"><path d="M275,398 C275,360 275,330 275,286" marker-end="url(#ar-at)"/><text class="edge-label" x="275" y="345" text-anchor="middle">targetRefs</text></g>
+          <g class="node" data-node="clienttrafficpolicy" tabindex="0" role="button" aria-label="ClientTrafficPolicy">
+            <rect class="glow-ring" x="197" y="397" width="156" height="80" rx="10"/>
+            <rect class="node-box" x="200" y="400" width="150" height="74" rx="8"/>
+            <text class="node-kind" x="214" y="422">CLIENTTRAFFIC</text>
+            <text class="node-title" x="214" y="443" style="font-size:13.5px;">ClientTrafficPolicy</text>
+            <text class="node-sub" x="214" y="461">tls · connection</text>
+          </g>
+
+          <!-- SecurityPolicy -> request -->
+          <g class="edge attach"><path d="M430,398 C438,360 442,330 445,286" marker-end="url(#ar-at)"/></g>
+          <g class="node" data-node="securitypolicy" tabindex="0" role="button" aria-label="SecurityPolicy">
+            <rect class="glow-ring" x="357" y="397" width="156" height="80" rx="10"/>
+            <rect class="node-box" x="360" y="400" width="150" height="74" rx="8"/>
+            <text class="node-kind" x="374" y="422">SECURITY</text>
+            <text class="node-title" x="374" y="443" style="font-size:13.5px;">SecurityPolicy</text>
+            <text class="node-sub" x="374" y="461">jwt · oidc · cors</text>
+          </g>
+
+          <!-- EnvoyExtensionPolicy -> request (second row) -->
+          <g class="edge attach"><path d="M445,508 C445,498 445,492 445,478 C445,470 448,468 452,458 C456,368 452,330 448,286" marker-end="url(#ar-at)"/></g>
+          <g class="node" data-node="envoyextensionpolicy" tabindex="0" role="button" aria-label="EnvoyExtensionPolicy">
+            <rect class="glow-ring" x="357" y="507" width="176" height="80" rx="10"/>
+            <rect class="node-box" x="360" y="510" width="170" height="74" rx="8"/>
+            <text class="node-kind" x="374" y="532">EXTENSION</text>
+            <text class="node-title" x="374" y="553" style="font-size:13.5px;">EnvoyExtensionPolicy</text>
+            <text class="node-sub" x="374" y="571">wasm · lua · extProc</text>
+          </g>
+
+          <!-- BackendTrafficPolicy -> upstream -->
+          <g class="edge attach"><path d="M770,398 C772,360 778,330 782,286" marker-end="url(#ar-at)"/><text class="edge-label" x="780" y="345" text-anchor="middle">targetRefs</text></g>
+          <g class="node" data-node="backendtrafficpolicy" tabindex="0" role="button" aria-label="BackendTrafficPolicy">
+            <rect class="glow-ring" x="697" y="397" width="176" height="80" rx="10"/>
+            <rect class="node-box" x="700" y="400" width="170" height="74" rx="8"/>
+            <text class="node-kind" x="714" y="422">BACKENDTRAFFIC</text>
+            <text class="node-title" x="714" y="443" style="font-size:13.5px;">BackendTrafficPolicy</text>
+            <text class="node-sub" x="714" y="461">retry · rateLimit · lb</text>
+          </g>
+
+          <!-- BackendTLSPolicy -> upstream/backend (Service) -->
+          <g class="edge attach"><path d="M785,508 C790,470 850,340 900,286" marker-end="url(#ar-at)"/><text class="edge-label" x="880" y="360" text-anchor="middle">Service</text></g>
+          <g class="node" data-node="backendtlspolicy" tabindex="0" role="button" aria-label="BackendTLSPolicy">
+            <rect class="glow-ring" x="697" y="507" width="156" height="80" rx="10"/>
+            <rect class="node-box" x="700" y="510" width="150" height="74" rx="8"/>
+            <text class="node-kind" x="714" y="532">BACKENDTLS</text>
+            <text class="node-title" x="714" y="553" style="font-size:13.5px;">BackendTLSPolicy</text>
+            <text class="node-sub" x="714" y="571">TLS к backend</text>
+          </g>
+
+          <!-- Backend CRD -> backend target -->
+          <g class="edge attach"><path d="M945,398 C948,360 950,330 950,286" marker-end="url(#ar-at)"/><text class="edge-label" x="948" y="345" text-anchor="middle">backendRefs</text></g>
+          <g class="node" data-node="p-backendcrd" tabindex="0" role="button" aria-label="Backend CRD">
+            <rect class="glow-ring" x="877" y="397" width="136" height="80" rx="10"/>
+            <rect class="node-box" x="880" y="400" width="130" height="74" rx="8"/>
+            <text class="node-kind" x="896" y="422">BACKEND CRD</text>
+            <text class="node-title" x="896" y="443" style="font-size:13.5px;">Backend</text>
+            <text class="node-sub" x="896" y="461">FQDN · IP</text>
+          </g>
+        </svg>
+        </div>
+
+        <!-- Ordered HTTP filter chain inside Envoy (request → response) -->
+        <div class="chain">
+          <div class="chain-head">
+            <span class="chain-title">Порядок фильтров внутри Envoy</span>
+            <span class="chain-sub">запрос сверху вниз · ответ в обратном порядке</span>
+          </div>
+          <ol class="chain-flow">
+            <li class="chain-step hroute" data-owner="httproute"><span class="cs-n">◆</span><span class="cs-body"><b>Матчинг маршрута</b><span class="cs-pol">HTTPRoute · host / path</span></span></li>
+            <li class="chain-arrow" aria-hidden="true" role="presentation">⟶</li>
+            <li class="chain-step l4" data-owner="clienttrafficpolicy"><span class="cs-n l4">L4</span><span class="cs-body"><b>TLS / соединение</b><span class="cs-pol">ClientTrafficPolicy</span></span></li>
+            <li class="chain-arrow" aria-hidden="true" role="presentation">⟶</li>
+            <li class="chain-divider" aria-hidden="true" role="presentation"><span class="chain-divider-t">HTTP-фильтры (L7)</span></li>
+            <li class="chain-step" data-owner="securitypolicy"><span class="cs-n">1</span><span class="cs-body"><b>CORS</b><span class="cs-pol">SecurityPolicy</span></span></li>
+            <li class="chain-arrow" aria-hidden="true" role="presentation">⟶</li>
+            <li class="chain-step" data-owner="securitypolicy"><span class="cs-n">2</span><span class="cs-body"><b>Внешняя авторизация · extAuth</b><span class="cs-pol">SecurityPolicy</span></span></li>
+            <li class="chain-arrow" aria-hidden="true" role="presentation">⟶</li>
+            <li class="chain-step" data-owner="securitypolicy"><span class="cs-n">3</span><span class="cs-body"><b>AuthN · API-key / Basic / OIDC / JWT</b><span class="cs-pol">SecurityPolicy</span></span></li>
+            <li class="chain-arrow" aria-hidden="true" role="presentation">⟶</li>
+            <li class="chain-step" data-owner="envoyextensionpolicy"><span class="cs-n">4</span><span class="cs-body"><b>Расширения · WASM / Lua / ext-proc</b><span class="cs-pol">EnvoyExtensionPolicy</span></span></li>
+            <li class="chain-arrow" aria-hidden="true" role="presentation">⟶</li>
+            <li class="chain-step" data-owner="backendtrafficpolicy"><span class="cs-n">5</span><span class="cs-body"><b>Rate limit</b><span class="cs-pol">BackendTrafficPolicy</span></span></li>
+            <li class="chain-arrow" aria-hidden="true" role="presentation">⟶</li>
+            <li class="chain-step hroute" data-owner="httproute"><span class="cs-n">⟶</span><span class="cs-body"><b>Router · dispatch</b><span class="cs-pol">HTTPRoute · backendRefs</span></span></li>
+          </ol>
+          <p class="chain-note"><b>HTTPRoute участвует дважды</b> (бирюзовые карточки): сначала Envoy <b>резолвит маршрут</b> по host/path - чтобы понять, какой per-route конфиг фильтров применять. <b>TLS / соединение</b> (ClientTrafficPolicy) - это уровень L4: терминация TLS и лимиты соединения происходят на листенере, <i>до</i> того как HTTP Connection Manager начинает разбирать запрос, - этот шаг не конкурирует за порядок с HTTP-фильтрами ниже. Дальше идёт L7-цепочка HTTP-фильтров по порядку (CORS → extAuth → authN → расширения → rate limit), и терминальный <b>router</b> отправляет запрос в выбранный <code>backendRefs</code>. Обратите внимание: <b>внешняя авторизация (extAuth) идёт до встроенных механизмов AuthN</b> (API-key / Basic / OIDC / JWT) - в дефолтном порядке фильтров Envoy Gateway <code>ext_authz</code> стоит сразу после <code>cors</code>. Точная микро-очерёдность внутри каждого блока (например, между разными authN-механизмами или между Lua/ext-proc/Wasm) зависит от версии и настраивается через <code>filterOrder</code> - сверяйтесь с docs при тонкой настройке.</p>
+        </div>
+
+        <div class="legend">
+          <span class="lg"><span class="lg-line"></span> путь запроса (data plane)</span>
+          <span class="lg"><span class="lg-line blue"></span> привязка политики (targetRef / backendRefs)</span>
+          <span class="lg"><span class="lg-line cfg"></span> control plane (генерация / патч конфигурации)</span>
+        </div>
+      </div>

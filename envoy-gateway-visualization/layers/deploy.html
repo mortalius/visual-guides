@@ -1,0 +1,268 @@
+      <div class="layer-panel" id="panel-deploy" role="tabpanel">
+        <div class="board-head">
+          <h2>Режимы развёртывания Gateway</h2>
+          <span class="hint">Как <code>Gateway</code> превращается в поды Envoy и балансировщики</span>
+        </div>
+
+        <!-- static mental-model diagram: Controller reconciles each Gateway into its own
+             Deployment+Service, independent of dedicated/merged mode below. Kept deliberately
+             simple (no LB/IP/counts) - that detail lives in the interactive topology further down. -->
+        <div class="dp-ctrl-diagram" role="img" aria-label="Envoy Gateway Controller создаёт Deployment и Service для каждого Gateway">
+          <div class="dp-ctrl-controller">
+            <span class="dp-ctrl-kind">CONTROL PLANE</span>
+            Envoy Gateway Controller
+            <small>смотрит на объекты Gateway в кластере</small>
+          </div>
+          <svg class="dp-ctrl-arrows" viewBox="0 0 300 26" preserveAspectRatio="none" aria-hidden="true">
+            <defs>
+              <marker id="dp-ar-ctrl-top" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                <path d="M1,1 L8,5 L1,9" fill="none" stroke="var(--c-violet)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+              </marker>
+            </defs>
+            <path d="M150,1 C150,12 50,9 50,24" marker-end="url(#dp-ar-ctrl-top)"/>
+            <path d="M150,1 V24" marker-end="url(#dp-ar-ctrl-top)"/>
+            <path d="M150,1 C150,12 250,9 250,24" marker-end="url(#dp-ar-ctrl-top)"/>
+          </svg>
+          <div class="dp-gws">
+            <span class="dp-gw" style="--g:var(--c-indigo)">hero-gw<small>:443</small></span>
+            <span class="dp-gw" style="--g:var(--c-teal)">api-gw<small>:443</small></span>
+            <span class="dp-gw" style="--g:var(--c-violet)">admin-gw<small>:8443</small></span>
+          </div>
+          <svg class="dp-ctrl-arrows" viewBox="0 0 300 26" preserveAspectRatio="none" aria-hidden="true">
+            <defs>
+              <marker id="dp-ar-ctrl-mid" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                <path d="M1,1 L8,5 L1,9" fill="none" stroke="var(--border-2)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+              </marker>
+            </defs>
+            <path d="M50,1 V24" marker-end="url(#dp-ar-ctrl-mid)"/>
+            <path d="M150,1 V24" marker-end="url(#dp-ar-ctrl-mid)"/>
+            <path d="M250,1 V24" marker-end="url(#dp-ar-ctrl-mid)"/>
+          </svg>
+          <div class="dp-ctrl-deps">
+            <span class="dp-ctrl-dep" style="--g:var(--c-indigo)">Deployment + Service<small>hero</small></span>
+            <span class="dp-ctrl-dep" style="--g:var(--c-teal)">Deployment + Service<small>api</small></span>
+            <span class="dp-ctrl-dep" style="--g:var(--c-violet)">Deployment + Service<small>admin</small></span>
+          </div>
+        </div>
+        <p class="dp-ctrl-caption">Каждый <code>Gateway</code> реконсайлится независимо: контроллер создаёт под него
+          собственный <code>Deployment</code> подов Envoy и <code>Service</code> типа LoadBalancer (AWS превращает его
+          в NLB) - это база изоляции data plane. Дальше - открытый вопрос: сколько таких <code>Gateway</code> делят
+          инфраструктуру между собой.</p>
+
+        <p class="dp-intro">Делить инфраструктуру между Gateway или изолировать - это компромисс между
+          <b>изоляцией</b> и <b>экономией инфраструктуры</b>, и у Envoy Gateway есть <b>три подхода</b>. По умолчанию
+          (как на схеме выше) каждый <code>Gateway</code> получает выделенный Deployment и свой балансировщик - трафик с
+          NLB одного <code>Gateway</code> не пересекается с другими. <b>Merged</b> сливает все Gateway одного класса в
+          общий флот и один вход (флаг EG <code>mergeGateways</code>). <b>ListenerSet</b> решает ту же задачу общей
+          точки входа, но иначе: один родительский <code>Gateway</code>, к которому команды прикрепляют свои листенеры
+          отдельными ресурсами - это Gateway API-native механизм, и проект <b>рекомендует его вместо
+          <code>mergeGateways</code></b> для новых развёртываний. Переключатель под диаграммой меняет и топологию
+          (число балансировщиков и внешних IP), и описание режима под ним.</p>
+
+        <!-- topology diagram (switches by .dp-view class on wrapper) -->
+        <div class="dp-topo" id="dp-topo" data-mode="dedicated">
+          <div class="dp-gws">
+            <span class="dp-gw" style="--g:var(--c-indigo)">hero-gw<small>:443</small></span>
+            <span class="dp-gw" style="--g:var(--c-teal)">api-gw<small>:443</small></span>
+            <span class="dp-gw" style="--g:var(--c-violet)">admin-gw<small>:8443</small></span>
+          </div>
+          <!-- connectors: 3 columns at x=50/150/250 map to the 3 gateway centers -->
+          <svg class="dp-arrows" viewBox="0 0 300 44" preserveAspectRatio="none" aria-hidden="true">
+            <defs>
+              <marker id="dp-ar" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                <path d="M1,1 L8,5 L1,9" fill="none" stroke="var(--border-2)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+              </marker>
+            </defs>
+            <!-- dedicated: each gateway → straight down into its own stack -->
+            <g class="dp-ar-dedicated">
+              <path d="M50,2 V40" marker-end="url(#dp-ar)"/>
+              <path d="M150,2 V40" marker-end="url(#dp-ar)"/>
+              <path d="M250,2 V40" marker-end="url(#dp-ar)"/>
+            </g>
+            <!-- merged / listenerset: sources → converge to the single shared fleet at center -->
+            <g class="dp-ar-converge">
+              <path d="M50,2 C50,26 150,20 150,40" marker-end="url(#dp-ar)"/>
+              <path d="M150,2 V40" marker-end="url(#dp-ar)"/>
+              <path d="M250,2 C250,26 150,20 150,40" marker-end="url(#dp-ar)"/>
+            </g>
+          </svg>
+
+          <!-- dedicated: three independent stacks -->
+          <div class="dp-stacks dp-dedicated">
+            <div class="dp-stack" style="--g:var(--c-indigo)">
+              <div class="dp-envoy">Envoy Deployment<small>hero</small></div>
+              <div class="dp-lb">NLB</div>
+              <div class="dp-ip">203.0.113<b>.10</b></div>
+            </div>
+            <div class="dp-stack" style="--g:var(--c-teal)">
+              <div class="dp-envoy">Envoy Deployment<small>api</small></div>
+              <div class="dp-lb">NLB</div>
+              <div class="dp-ip">203.0.113<b>.11</b></div>
+            </div>
+            <div class="dp-stack" style="--g:var(--c-violet)">
+              <div class="dp-envoy">Envoy Deployment<small>admin</small></div>
+              <div class="dp-lb">NLB</div>
+              <div class="dp-ip">203.0.113<b>.12</b></div>
+            </div>
+          </div>
+
+          <!-- merged: one shared stack -->
+          <div class="dp-stacks dp-merged">
+            <div class="dp-stack shared">
+              <div class="dp-envoy wide">Один Envoy Deployment<small>merged · листенеры :443 (hero) · :443 (api, по SNI) · :8443 (admin)</small></div>
+              <div class="dp-lb wide">Один NLB</div>
+              <div class="dp-ip wide">203.0.113<b>.10</b> · единый IP</div>
+            </div>
+          </div>
+
+          <!-- listenerset: one parent Gateway's fleet, listeners contributed by teams -->
+          <div class="dp-stacks dp-listenerset">
+            <div class="dp-stack shared">
+              <div class="dp-envoy wide">Флот одного Gateway hero-gw<small>листенеры наборов team-a (:443 по SNI) и team-b (:8443) прикреплены к общему Gateway</small></div>
+              <div class="dp-lb wide">Один NLB</div>
+              <div class="dp-ip wide">203.0.113<b>.10</b> · единый IP</div>
+            </div>
+          </div>
+
+          <div class="dp-counts">
+            <span class="dp-count"><b class="dp-n-envoy">3</b> Envoy Deployment</span>
+            <span class="dp-count"><b class="dp-n-lb">3</b> балансировщика</span>
+            <span class="dp-count"><b class="dp-n-ip">3</b> внешних IP</span>
+          </div>
+        </div>
+
+        <!-- mode switch: drives BOTH #dp-topo above and the single .dp-card below -->
+        <div class="dp-switch" role="tablist" aria-label="Режим развёртывания">
+          <button class="dp-mode active" data-mode="dedicated" role="tab" aria-selected="true">
+            <span class="dp-mode-t">Gateway per Service</span>
+            <span class="dp-mode-s">по умолчанию · выделенный флот</span>
+          </button>
+          <button class="dp-mode" data-mode="merged" role="tab" aria-selected="false">
+            <span class="dp-mode-t">Merged Gateways</span>
+            <span class="dp-mode-s"><code>mergeGateways: true</code></span>
+          </button>
+          <button class="dp-mode" data-mode="listenerset" role="tab" aria-selected="false">
+            <span class="dp-mode-t">ListenerSet <span class="dp-rec">рекоменд.</span></span>
+            <span class="dp-mode-s">Gateway API-native</span>
+          </button>
+        </div>
+
+        <!-- mode description: only the card matching #dp-compare[data-mode] is shown -->
+        <div class="dp-compare" id="dp-compare" data-mode="dedicated">
+          <article class="dp-card dp-card-dedicated">
+            <header><span class="dp-badge" style="--g:var(--c-emerald)">режим 1</span><h3>Gateway per Service</h3></header>
+            <dl>
+              <dt>Топология</dt><dd>Каждый <code>Gateway</code> → свой Deployment Envoy + свой Service (NLB) + свой IP.</dd>
+              <dt>Сертификаты</dt><dd>Свои <code>listeners[].tls.certificateRefs</code> у каждого Gateway; терминация независима, свои Secret'ы.</dd>
+              <dt class="pro">Плюсы</dt>
+              <dd class="pro"><ul class="dp-list">
+                <li>Полная изоляция - кривой конфиг или падение одного Gateway не задевает другие.</li>
+                <li>Независимый сайзинг и масштабирование каждого флота.</li>
+                <li>Удобно разводить по разным namespace и командам.</li>
+              </ul></dd>
+              <dt class="con">Подводные камни</dt>
+              <dd class="con"><ul class="dp-list">
+                <li>N балансировщиков = N× стоимость LB.</li>
+                <li>Разрастание внешних IP и DNS-записей.</li>
+                <li>Больше объектов в эксплуатации и мониторинге.</li>
+              </ul></dd>
+            </dl>
+          </article>
+          <article class="dp-card dp-card-merged">
+            <header><span class="dp-badge" style="--g:var(--c-amber)">режим 2</span><h3>Merged Gateways</h3></header>
+            <dl>
+              <dt>Топология</dt><dd>Флаг <code>mergeGateways: true</code> в <code>EnvoyProxy</code> (через <code>GatewayClass.parametersRef</code>) → все Gateway класса сливаются в <b>один</b> Deployment + один Service/LB + один IP.</dd>
+              <dt>Сертификаты</dt><dd>По-прежнему per-listener <code>certificateRefs</code>, но терминируются на общем флоте; нужный серт выбирается по SNI.</dd>
+              <dt class="pro">Плюсы</dt>
+              <dd class="pro"><ul class="dp-list">
+                <li>Один LB на весь класс - заметно дешевле.</li>
+                <li>Единая точка входа и один IP - проще DNS.</li>
+                <li>Централизованное управление инфраструктурой прокси.</li>
+              </ul></dd>
+              <dt class="con">Подводные камни</dt>
+              <dd class="con"><ul class="dp-list">
+                <li>Тройка <code>(port, protocol, hostname)</code> должна быть <b>уникальна</b> по всем листенерам класса - иначе конфликт.</li>
+                <li>Общий blast radius: проблема одного листенера бьёт по общему флоту (noisy neighbor).</li>
+                <li>Масштабирование и инфра-настройки - общие на класс.</li>
+                <li><code>ClientTrafficPolicy</code> всё равно применяется per-Gateway.</li>
+                <li>Механизм EG-specific, появился до поддержки ListenerSet в Gateway API.</li>
+              </ul></dd>
+            </dl>
+            <!-- lives inside this card: the flag exists only in the merged mode -->
+            <div class="dp-yaml">
+              <div class="dp-yaml-head">Флаг задаётся в <code>EnvoyProxy</code>, на который ссылается <code>GatewayClass.parametersRef</code> - то есть действует на весь класс сразу:</div>
+              <pre class="manifest-pre">apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: proxy-config
+  namespace: envoy-gateway-system
+spec:
+  <span class="dp-flag">mergeGateways: <b class="dp-flag-v">true</b></span>   <span class="c"># false (по умолчанию) → свой флот на каждый Gateway</span></pre>
+            </div>
+          </article>
+          <article class="dp-card dp-card-listenerset">
+            <header><span class="dp-badge" style="--g:var(--c-teal)">режим 3</span><h3>ListenerSet</h3><span class="dp-rec">рекоменд.</span></header>
+            <dl>
+              <dt>Топология</dt><dd>Отдельные ресурсы <code>ListenerSet</code> прикрепляют листенеры к общему родительскому <code>Gateway</code> (через <code>parentRef</code>) → тот же общий флот и один IP, но без флага EG.</dd>
+              <dt>Сертификаты</dt><dd>Каждый набор несёт свои <code>listeners[].tls.certificateRefs</code>; команда управляет сертификатами независимо, выбор по SNI на общем флоте.</dd>
+              <dt class="pro">Плюсы</dt>
+              <dd class="pro"><ul class="dp-list">
+                <li>Gateway API-native - <b>рекомендуемая</b> замена <code>mergeGateways</code>.</li>
+                <li>Делегирование: платформа владеет <code>Gateway</code>, команды - своими листенерами и сертификатами.</li>
+                <li>Один LB и IP + обход лимита в 64 листенера на Gateway.</li>
+              </ul></dd>
+              <dt class="con">Подводные камни</dt>
+              <dd class="con"><ul class="dp-list">
+                <li>Нужен CRD <code>ListenerSet</code> (Gateway API v1.5+) и разрешение через <code>spec.allowedListeners</code> на Gateway (по умолчанию запрещено).</li>
+                <li>В EG до v1.8 был за флагом <code>XListenerSet</code>; с v1.8 включается наличием CRD.</li>
+                <li>Пока не поддерживается как <code>targetRef</code> для политик EG.</li>
+              </ul></dd>
+            </dl>
+          </article>
+        </div>
+
+        <!-- Ingress → Gateway API migration -->
+        <div class="dp-migrate">
+          <div class="chain-head">
+            <span class="chain-title">Ментальная модель: Ingress → Gateway API</span>
+            <span class="chain-sub">что во что превращается при миграции</span>
+          </div>
+          <p class="dp-intro">Gateway API разбивает монолитный <code>Ingress</code> на роли: <b>инфраструктуру</b> (кто владеет точкой входа)
+            и <b>маршрутизацию</b> (куда идёт трафик) можно менять и раздавать разным командам независимо.</p>
+          <div class="mig-grid">
+            <div class="mig-col mig-old">
+              <div class="mig-h">Ingress (один объект)</div>
+              <pre class="manifest-pre">apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hero
+  <span class="c">annotations:            # vendor-specific</span>
+    <span class="c">nginx.ingress.../rewrite-target: /</span>
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: [hero.example.com]
+      secretName: hero-tls
+  rules:
+    - host: hero.example.com
+      http:
+        paths:
+          - path: /api
+            backend:
+              service: { name: app, port: { number: 8080 } }</pre>
+            </div>
+            <div class="mig-arrow" aria-hidden="true">⟶</div>
+            <div class="mig-col mig-new">
+              <div class="mig-h">Gateway API (роли разделены)</div>
+              <ul class="mig-map">
+                <li><span class="mig-k">ingressClassName</span><span class="mig-v">GatewayClass + Gateway</span><span class="mig-note">кто владеет точкой входа и портами</span></li>
+                <li><span class="mig-k">tls / secretName</span><span class="mig-v">Gateway listeners[].tls</span><span class="mig-note">терминация на листенере :443</span></li>
+                <li><span class="mig-k">rules / host / path</span><span class="mig-v">HTTPRoute</span><span class="mig-note">маршрутизация, отдельный объект/владелец</span></li>
+                <li><span class="mig-k">backend.service</span><span class="mig-v">HTTPRoute.backendRefs</span><span class="mig-note">+ веса для canary</span></li>
+                <li><span class="mig-k">аннотации (rewrite, cors, auth)</span><span class="mig-v">HTTPRoute filters + *Policy</span><span class="mig-note">типизированные поля вместо строк-аннотаций</span></li>
+              </ul>
+            </div>
+          </div>
+          <p class="chain-note"><b>Главное отличие:</b> в Ingress всё - в одном объекте и в vendor-аннотациях; в Gateway API это типизированные ресурсы с разными владельцами. Платформенная команда держит <code>GatewayClass</code>/<code>Gateway</code>, продуктовая - свои <code>HTTPRoute</code> и политики.</p>
+        </div>
+      </div>

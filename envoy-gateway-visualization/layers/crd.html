@@ -1,0 +1,97 @@
+      <div class="layer-panel active" id="panel-crd" role="tabpanel">
+        <div class="board-head">
+          <h2>Ссылки между ресурсами</h2>
+          <span class="hint">Стрелка = поле, которым ресурс ссылается на другой</span>
+        </div>
+        <div class="diagram-scroll">
+        <svg class="diagram" viewBox="0 0 960 540" role="img" aria-label="Схема связей CRD Envoy Gateway">
+          <defs>
+            <marker id="ar" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0.5,0.5 L9,5 L0.5,9.5" fill="none" stroke="var(--border-2)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+            <marker id="ar-cfg" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0.5,0.5 L9,5 L0.5,9.5" fill="none" stroke="var(--text-3)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+            <marker id="ar-at" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+              <path d="M0.5,0.5 L9,5 L0.5,9.5" fill="none" stroke="var(--primary)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+          </defs>
+
+          <!-- edges -->
+          <g class="edge config owns"><path d="M258,150 C300,128 350,116 392,104" marker-end="url(#ar-cfg)"/><text class="edge-label" x="316" y="116" text-anchor="middle">controllerName · владеет</text></g>
+          <g class="edge"><path d="M290,186 C440,168 540,168 668,186" marker-end="url(#ar)"/><text class="edge-label" x="480" y="168" text-anchor="middle">parametersRef</text></g>
+          <g class="edge"><path d="M170,330 C160,296 160,272 170,240" marker-end="url(#ar)"/><text class="edge-label" x="170" y="288" text-anchor="middle">gatewayClassName</text></g>
+          <!-- gaps between the bottom-row nodes are narrower than these labels, so
+               lift them above the arrow into clear space (else the later-drawn node boxes cover the ends) -->
+          <g class="edge"><path d="M368,366 C336,366 318,366 292,366" marker-end="url(#ar)"/><text class="edge-label" x="331" y="320" text-anchor="middle">parentRefs</text></g>
+          <g class="edge"><path d="M602,366 C636,366 650,366 668,366" marker-end="url(#ar)"/><text class="edge-label" x="635" y="320" text-anchor="middle">backendRefs</text></g>
+          <!-- ListenerSet → Gateway: adds listeners via parentRef (upward) -->
+          <g class="edge"><path d="M175,438 C175,430 175,428 175,422" marker-end="url(#ar)"/><text class="edge-label" x="192" y="434" text-anchor="start">parentRef</text></g>
+
+          <!-- nodes -->
+          <g class="node control" data-node="controller" tabindex="0" role="button" aria-label="Envoy Gateway Controller">
+            <rect class="glow-ring" x="357" y="41" width="246" height="72" rx="10"/>
+            <rect class="node-box" x="360" y="44" width="240" height="66" rx="8"/>
+            <text class="node-kind" x="380" y="74">CONTROL PLANE</text>
+            <text class="node-title" x="380" y="96">Envoy Gateway Controller</text>
+          </g>
+          <g class="node" data-node="gatewayclass" tabindex="0" role="button" aria-label="GatewayClass">
+            <rect class="glow-ring" x="57" y="147" width="236" height="94" rx="10"/>
+            <rect class="node-box" x="60" y="150" width="230" height="88" rx="8"/>
+            <text class="node-kind" x="80" y="178">GATEWAYCLASS</text>
+            <text class="node-title" x="80" y="204">eg</text>
+            <text class="node-sub" x="80" y="223">cluster-scoped · шаблон</text>
+          </g>
+          <g class="node" data-node="envoyproxy" tabindex="0" role="button" aria-label="EnvoyProxy">
+            <rect class="glow-ring" x="667" y="147" width="236" height="94" rx="10"/>
+            <rect class="node-box" x="670" y="150" width="230" height="88" rx="8"/>
+            <text class="node-kind" x="690" y="178">ENVOYPROXY</text>
+            <text class="node-title" x="690" y="204">proxy-config</text>
+            <text class="node-sub" x="690" y="223">настройки data plane</text>
+          </g>
+          <g class="node" data-node="gateway" tabindex="0" role="button" aria-label="Gateway">
+            <rect class="glow-ring" x="57" y="327" width="236" height="94" rx="10"/>
+            <rect class="node-box" x="60" y="330" width="230" height="88" rx="8"/>
+            <text class="node-kind" x="80" y="358">GATEWAY</text>
+            <text class="node-title" x="80" y="384">hero-gw</text>
+            <text class="node-sub" x="80" y="403">listeners :80 / :443</text>
+          </g>
+          <!-- ListenerSet: optional companion that adds listeners to the Gateway -->
+          <g class="node" data-node="listenerset" tabindex="0" role="button" aria-label="ListenerSet (опциональный)">
+            <rect class="glow-ring" x="57" y="437" width="236" height="80" rx="10"/>
+            <rect class="node-box opt" x="60" y="440" width="230" height="74" rx="8"/>
+            <text class="node-kind" x="80" y="468">LISTENERSET <tspan class="opt-tag">· опц.</tspan></text>
+            <text class="node-title" x="80" y="492">hero-team-listeners</text>
+            <text class="node-sub" x="80" y="507">+ листенеры к Gateway</text>
+          </g>
+          <g class="node" data-node="httproute" tabindex="0" role="button" aria-label="HTTPRoute">
+            <rect class="glow-ring" x="367" y="327" width="236" height="94" rx="10"/>
+            <rect class="node-box" x="370" y="330" width="230" height="88" rx="8"/>
+            <text class="node-kind" x="390" y="358">HTTPROUTE</text>
+            <text class="node-title" x="390" y="384">hero-route</text>
+            <text class="node-sub" x="390" y="403">host + path rules</text>
+          </g>
+          <g class="node" data-node="backend" tabindex="0" role="button" aria-label="Backend / Service">
+            <rect class="glow-ring" x="667" y="327" width="236" height="94" rx="10"/>
+            <rect class="node-box" x="670" y="330" width="230" height="88" rx="8"/>
+            <text class="node-kind" x="690" y="358">BACKEND / SERVICE</text>
+            <text class="node-title" x="690" y="384">app-backend</text>
+            <text class="node-sub" x="690" y="403">Service · FQDN · IP</text>
+          </g>
+
+          <!-- Policy hint: several *Policy CRDs attach to HTTPRoute; details live on the Policies layer -->
+          <g class="edge attach"><path d="M485,440 C485,432 485,430 485,422" marker-end="url(#ar-at)"/></g>
+          <g class="policy-hint" data-goto="policies" tabindex="0" role="button" aria-label="Политики применяются к HTTPRoute - открыть слой Политики">
+            <rect x="370" y="440" width="230" height="66" rx="8"/>
+            <text class="ph-kind" x="386" y="466">+ ПОЛИТИКИ · targetRefs</text>
+            <text class="ph-sub" x="386" y="485">Security/Backend/Extension…</text>
+            <text class="ph-link" x="386" y="500">→ подробнее на слое «Политики»</text>
+          </g>
+        </svg>
+        </div>
+        <div class="legend">
+          <span class="lg"><span class="lg-line"></span> ссылка через поле spec (<code>*Ref</code>)</span>
+          <span class="lg"><span class="lg-line owns"></span> владение: контроллер владеет классом (не ссылка, не трафик)</span>
+          <span class="lg"><span class="lg-line blue"></span> привязка политик (см. слой «Политики»)</span>
+        </div>
+      </div>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Путь трейса: обработка, фильтры и семплинг в otel-collector и Tempo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=1">
+</head>
+<body>
+<div class="wrap" data-act="collector">
+
+  <header class="masthead">
+    <div class="eyebrow">Reference · Observability · Tracing</div>
+    <h1>Путь трейса: обработка, фильтры и семплинг</h1>
+    <p class="subtitle">интерактивный гайд по otel-collector и Tempo</p>
+    <p class="lede">Трейс проходит через десяток независимых решений: head sampling в SDK, пропагация через
+      <code>traceparent</code>, pipeline-граф коллектора, <code>tail_sampling</code> с буфером и таймером,
+      лимиты ingestion, границы блоков, компакция. Каждый механизм документирован по отдельности -
+      здесь они собраны в <b>один путь с количественными последствиями на каждом шаге</b>.
+      Двигайте ручки: числа пересчитываются во всех линзах согласованно.</p>
+  </header>
+
+  <!-- Act tabs: each carries its own hue, so the nav doubles as the act legend.
+       Rendered from ACTS (data.js) by app.js. -->
+  <div class="tabs" id="tabs" role="tablist" aria-label="Акты пути трейса"></div>
+
+  <!-- Lens nav (second level). Lenses are reused across acts; ones that don't
+       apply stay visible but dimmed, with the reason in title. -->
+  <div class="lenses" id="lenses" role="tablist" aria-label="Линзы"></div>
+
+  <div class="color-key" id="color-key" aria-label="Легенда цветов узлов"></div>
+
+  <div class="stage">
+    <div class="board" id="board">
+      <div class="board-head">
+        <h2 id="lens-title"></h2>
+        <span class="hint" id="lens-hint"></span>
+      </div>
+      <p class="board-lede" id="lens-lede"></p>
+      <div class="lens-panel" id="lens-panel"></div>
+    </div>
+
+    <!-- Side panel is the LENS CONSOLE (knobs, result, caveats, config), not a
+         detail view of a selected node - so it is always populated and has no
+         empty state. See DESIGN.md §3.6. -->
+    <aside class="side" id="side">
+      <div class="side-top">
+        <div class="side-kind">
+          <span id="side-kind"></span>
+          <span class="side-badge" id="side-badge"></span>
+        </div>
+        <div class="side-title" id="side-title"></div>
+      </div>
+      <div class="side-body" id="side-body"></div>
+    </aside>
+  </div>
+
+  <pre id="selftest"></pre>
+
+  <footer class="foot">
+    <div class="versions" id="versions"></div>
+    <div class="foot-note">
+      Классическая схема Tempo: distributor → ingester → compactor, без live-store и Kafka.
+      Числа в примерах абстрактные и круглые - материал вендор-нейтрален и не привязан к конкретным
+      кластерам. Расчёт иллюстративный: показывает механику и порядок величины, а не прогноз
+      для конкретного окружения.
+    </div>
+  </footer>
+</div>
+
+<!-- Load order: model (pure math) → data (content) → app (behavior).
+     app.js wires everything at load time, so it must come last.
+     Bump ?v=N on every asset edit (keep in sync with styles.css above). -->
+<script src="model.js?v=1"></script>
+<script src="data.js?v=1"></script>
+<script src="app.js?v=1"></script>
+</body>
+</html>

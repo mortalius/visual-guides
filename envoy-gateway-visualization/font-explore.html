@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Envoy Gateway vis - сравнение вариантов типографики</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- All families needed across the 5 variants. Cyrillic subset requested where the
+     family supports it (Google serves it automatically via unicode-range). -->
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Serif:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&family=Lora:wght@500;600;700&family=Source+Sans+3:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   Font-exploration harness.
+   Reuses the real "Blueprint Journal" palette so each variant is
+   judged in-context. The ONLY thing that changes between variants
+   is the type trio (--v-display / --v-font / --v-mono).
+   ============================================================ */
+:root{
+  --bg-primary:#eaeef7;
+  --bg-surface:#ffffff;
+  --bg-surface-2:#f3f6fc;
+  --bg-inset:#eef2fb;
+  --border:#dde3ef;
+  --border-faint:#e8ecf5;
+  --border-muted:#c9d2e2;
+  --border-2:#8c98b2;
+  --text-primary:#141a2b;
+  --text-secondary:#414a5f;
+  --text-muted:#78839c;
+  --text-3:#98a3ba;
+  --primary:#4f46e5;
+  --accent-manifest-weak:rgba(79,70,229,.10);
+  --accent-traffic:#0a9e63;
+  --brand:#e11d48;
+  --accent-warning:#b45309;
+  --c-teal:#0d9488;
+  --radius:9px;
+  --radius-lg:14px;
+  --shadow:0 1px 2px rgba(20,26,43,.05),0 14px 34px -14px rgba(30,41,90,.22);
+  --shadow-sm:0 1px 2px rgba(20,26,43,.05),0 6px 16px -10px rgba(30,41,90,.2);
+  --s-xs:8px; --s-sm:12px; --s-md:16px; --s-lg:24px; --s-xl:32px;
+  --ease:cubic-bezier(.4,0,.2,1);
+
+  /* default trio = current project (overridden per variant) */
+  --v-font:"Hanken Grotesk",system-ui,-apple-system,Segoe UI,sans-serif;
+  --v-display:"Fraunces",Georgia,"Times New Roman",serif;
+  --v-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:var(--v-font);
+  color:var(--text-secondary);
+  background-color:var(--bg-primary);
+  background-image:
+    radial-gradient(circle at 12% -8%, rgba(79,70,229,.14), transparent 42%),
+    radial-gradient(circle at 92% 4%, rgba(10,158,99,.10), transparent 44%),
+    radial-gradient(circle at 60% 120%, rgba(225,29,72,.08), transparent 50%),
+    radial-gradient(circle at 1px 1px, rgba(72,86,120,.11) 1px, transparent 0);
+  background-size:auto,auto,auto,23px 23px;
+  background-attachment:fixed;
+  -webkit-font-smoothing:antialiased;
+  line-height:1.6;font-size:16px;min-height:100vh;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:var(--s-xl) var(--s-lg) 72px;}
+
+/* ---- page intro ---- */
+.page-head{padding-bottom:var(--s-lg);margin-bottom:var(--s-xl);border-bottom:1px solid var(--border);}
+.page-head .kicker{font-family:var(--v-mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--brand);font-weight:500;display:flex;align-items:center;gap:10px;margin-bottom:var(--s-md);}
+.page-head .kicker::before{content:"";width:28px;height:3px;border-radius:3px;background:var(--brand);}
+.page-head h1{font-family:var(--v-display);font-size:clamp(1.5rem,3vw,2.3rem);font-weight:600;line-height:1.05;letter-spacing:-.015em;margin:0 0 var(--s-md);color:var(--text-primary);}
+.page-head p{font-size:15.5px;color:var(--text-secondary);max-width:74ch;margin:0 0 12px;}
+.page-head .warn{background:#fff7ed;border:1px solid color-mix(in srgb,var(--accent-warning) 30%,transparent);border-left:3px solid var(--accent-warning);border-radius:var(--radius);padding:12px 15px;font-size:13.5px;color:var(--accent-warning);max-width:74ch;line-height:1.55;margin-top:var(--s-md);}
+.page-head .warn b{color:#92400e;}
+.page-head code{font-family:var(--v-mono);font-size:.86em;background:var(--accent-manifest-weak);color:var(--primary);padding:1px 6px;border-radius:5px;border:1px solid color-mix(in srgb,var(--primary) 20%,transparent);}
+
+/* ---- variant frame ---- */
+.variant{margin-bottom:var(--s-xl);background:var(--bg-surface);border:1px solid var(--border-muted);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden;}
+.variant-bar{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px;padding:15px 22px;background:linear-gradient(180deg,#f7f9fe,#eef2fb);border-bottom:1px solid var(--border-muted);}
+.variant-bar .vn{font-family:var(--v-mono);font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--primary);}
+.variant-bar .vt{font-family:var(--v-display);font-size:19px;font-weight:600;color:var(--text-primary);letter-spacing:-.01em;}
+.variant-bar .vtag{margin-left:auto;font-family:var(--v-mono);font-size:11px;padding:3px 10px;border-radius:999px;font-weight:600;}
+.vtag.ok{background:rgba(10,158,99,.12);color:#0a7d50;border:1px solid rgba(10,158,99,.35);}
+.vtag.bad{background:rgba(225,29,72,.10);color:#be123c;border:1px solid rgba(225,29,72,.32);}
+.variant-meta{display:flex;flex-wrap:wrap;gap:6px 22px;padding:11px 22px;background:var(--bg-surface-2);border-bottom:1px solid var(--border-faint);font-family:var(--v-mono);font-size:11.5px;color:var(--text-muted);}
+.variant-meta b{color:var(--text-secondary);font-weight:600;}
+.variant-note{padding:12px 22px 0;font-size:13.5px;color:var(--text-secondary);max-width:82ch;line-height:1.5;}
+.variant-note b{color:var(--text-primary);font-weight:600;}
+
+/* ---- the mock (identical content in every variant, only the type changes) ---- */
+.mock{padding:22px;display:grid;grid-template-columns:1.15fr .85fr;gap:22px;}
+@media(max-width:820px){.mock{grid-template-columns:1fr;}}
+.mock-left,.mock-right{display:flex;flex-direction:column;gap:16px;}
+
+.m-eyebrow{font-family:var(--v-mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--brand);font-weight:500;display:flex;align-items:center;gap:10px;}
+.m-eyebrow::before{content:"";width:24px;height:3px;border-radius:3px;background:var(--brand);}
+.m-h1{font-family:var(--v-display);font-size:29px;font-weight:600;line-height:1.06;letter-spacing:-.015em;margin:0;color:var(--text-primary);}
+.m-h1 em{font-family:var(--v-font);font-style:normal;font-weight:700;font-size:.82em;letter-spacing:-.01em;color:var(--primary);}
+.m-lede{font-size:15px;color:var(--text-secondary);margin:0;line-height:1.6;}
+.m-lede b{color:var(--text-primary);font-weight:600;}
+
+/* node card (mirrors SVG .node in real doc, rendered as HTML here) */
+.m-node{background:var(--bg-surface);border:1px solid color-mix(in srgb,var(--c-teal) 45%,var(--border-muted));border-left:4px solid var(--c-teal);border-radius:10px;padding:13px 15px;box-shadow:var(--shadow-sm);}
+.m-node .nk{font-family:var(--v-mono);font-size:12.5px;letter-spacing:.08em;font-weight:700;text-transform:uppercase;color:var(--c-teal);}
+.m-node .nt{font-family:var(--v-font);font-size:17px;font-weight:700;color:var(--text-primary);letter-spacing:-.01em;margin:3px 0 2px;}
+.m-node .ns{font-family:var(--v-mono);font-size:11px;color:var(--text-muted);}
+
+.m-sect{font-family:var(--v-mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-secondary);margin:0 0 4px;font-weight:700;}
+.m-fields{display:flex;flex-direction:column;gap:9px;margin:0;}
+.m-field{font-size:13.5px;line-height:1.5;color:var(--text-secondary);}
+.m-field b{color:var(--text-primary);font-weight:600;}
+.m-field code,.m-lede code{font-family:var(--v-mono);font-size:12px;background:var(--accent-manifest-weak);color:var(--primary);padding:2px 6px;border-radius:5px;border:1px solid color-mix(in srgb,var(--primary) 20%,transparent);}
+
+.m-badges{display:flex;gap:8px;flex-wrap:wrap;}
+.m-badge{font-family:var(--v-mono);font-size:10.5px;font-weight:500;letter-spacing:.04em;padding:4px 10px;border-radius:999px;background:var(--bg-inset);color:var(--text-secondary);border:1px solid var(--border-muted);}
+
+/* manifest block (dark, matches real doc) */
+.m-manifest{font-family:var(--v-mono);font-size:12.5px;line-height:1.75;background:#111830;color:#c3cde4;border:1px solid #26304f;border-left:3px solid var(--primary);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;white-space:pre;tab-size:2;font-variant-numeric:tabular-nums;margin:0;}
+.m-manifest .k{color:#8ea2d6;}
+.m-manifest .yk{color:#fff;background:var(--primary);padding:1px 4px;border-radius:3px;font-weight:500;}
+.m-manifest .v{color:#7fd6b0;}
+.m-manifest .c{color:#69769c;font-style:italic;}
+.m-manifest .n{color:#e0b78a;}
+
+.m-pangram{margin:0;padding-top:2px;font-size:20px;color:var(--text-primary);font-family:var(--v-display);font-weight:600;line-height:1.2;}
+.m-pangram small{display:block;font-family:var(--v-font);font-weight:400;font-size:14px;color:var(--text-secondary);margin-top:4px;line-height:1.5;}
+.m-pangram .mono{display:block;font-family:var(--v-mono);font-weight:400;font-size:12.5px;color:var(--text-muted);margin-top:6px;}
+
+/* per-variant type trios ------------------------------------ */
+.v-current{--v-font:"Hanken Grotesk",system-ui,-apple-system,Segoe UI,sans-serif;--v-display:"Fraunces",Georgia,"Times New Roman",serif;--v-mono:"JetBrains Mono",ui-monospace,monospace;}
+.v-editorial{--v-font:"Inter",system-ui,sans-serif;--v-display:"Playfair Display",Georgia,serif;--v-mono:"JetBrains Mono",ui-monospace,monospace;}
+.v-plex{--v-font:"IBM Plex Sans",system-ui,sans-serif;--v-display:"IBM Plex Serif",Georgia,serif;--v-mono:"IBM Plex Mono",ui-monospace,monospace;}
+.v-grotesque{--v-font:"Manrope",system-ui,sans-serif;--v-display:"Manrope",system-ui,sans-serif;--v-mono:"JetBrains Mono",ui-monospace,monospace;}
+.v-warm{--v-font:"Source Sans 3",system-ui,sans-serif;--v-display:"Lora",Georgia,serif;--v-mono:"Fira Code",ui-monospace,monospace;}
+/* variant 4 leans on weight (not style) for display; boost the heading weight */
+.v-grotesque .m-h1,.v-grotesque .variant-bar .vt,.v-grotesque .m-pangram,.v-grotesque .page-head h1{font-weight:800;letter-spacing:-.02em;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="page-head">
+    <div class="kicker">Typography · сравнение вариантов</div>
+    <h1>Пять типографических систем для Envoy Gateway vis</h1>
+    <p>Одна и та же карточка-макет отрисована пятью разными шрифтовыми трио. Меняются <b>только</b>
+      шрифты (дисплейный / текстовый / моно) - палитра, отступы и компоненты одинаковы, чтобы сравнение
+      было честным. Вариант&nbsp;1 - текущий стиль, варианты&nbsp;2-5 - предложения.</p>
+    <div class="warn">
+      <b>Ключевая находка.</b> Интерфейс на русском, но текущие шрифты <b>Fraunces</b> и
+      <b>Hanken&nbsp;Grotesk</b> не содержат кириллицы. Поэтому все русские заголовки сейчас
+      падают на <code>Georgia</code>, а весь русский текст - на системный <code>system-ui</code>.
+      То есть подобранная типографика реально работает лишь на латинских техметках (KIND, YAML),
+      а сам контент отображается запасными шрифтами. Все варианты 2-5 подобраны с полной поддержкой кириллицы.
+    </div>
+  </div>
+
+  <!-- ============ VARIANT 1 - CURRENT ============ -->
+  <section class="variant v-current">
+    <div class="variant-bar">
+      <span class="vn">01 / текущий</span>
+      <span class="vt">Blueprint Journal (as-is)</span>
+      <span class="vtag bad">кириллица: только mono</span>
+    </div>
+    <div class="variant-meta">
+      <span><b>Display:</b> Fraunces 600 · <i>нет кириллицы → Georgia</i></span>
+      <span><b>Text:</b> Hanken Grotesk · <i>нет кириллицы → system-ui</i></span>
+      <span><b>Mono:</b> JetBrains Mono ✓</span>
+    </div>
+    <p class="variant-note"><b>Как есть сейчас.</b> Редакторский серифный дисплей + чистый гротеск + техно-моно.
+      Задумка отличная, но на кириллице разваливается: заголовок ниже - это Georgia, а не Fraunces; тело - системный шрифт.</p>
+    <div class="mock">
+      <div class="mock-left">
+        <div class="m-eyebrow">Reference · Gateway API</div>
+        <h1 class="m-h1">Envoy Gateway <em>интерактивный гайд</em></h1>
+        <p class="m-lede">Визуальный разбор для инженеров: как связаны CRD, каким путём идёт трафик
+          и где применяются политики. Кликайте узлы - раскрываются назначение, связи и пример
+          манифеста <code>HTTPRoute</code>.</p>
+        <div class="m-node">
+          <div class="nk">HTTPRoute</div>
+          <div class="nt">Маршрут HTTP-запросов</div>
+          <div class="ns">gateway.networking.k8s.io/v1</div>
+        </div>
+        <div>
+          <div class="m-sect">Характеристики</div>
+          <div class="m-fields">
+            <div class="m-field"><b>parentRefs</b> - привязка к <code>Gateway</code> и слушателю.</div>
+            <div class="m-field"><b>rules[].matches</b> - условия совпадения пути и заголовков.</div>
+          </div>
+        </div>
+        <div class="m-badges"><span class="m-badge">namespaced</span><span class="m-badge">v1 GA</span><span class="m-badge">SIG-Network</span></div>
+      </div>
+      <div class="mock-right">
+        <pre class="m-manifest"><span class="c"># маршрут «префикс /api → сервис»</span>
+<span class="k">apiVersion:</span> <span class="v">gateway.networking.k8s.io/v1</span>
+<span class="k">kind:</span> <span class="v">HTTPRoute</span>
+<span class="k">metadata:</span>
+  <span class="k">name:</span> <span class="v">api-route</span>
+<span class="k">spec:</span>
+  <span class="yk">parentRefs:</span>
+    - <span class="k">name:</span> <span class="v">eg-gateway</span>
+  <span class="k">rules:</span>
+    - <span class="k">matches:</span>
+        - <span class="k">path:</span> {<span class="k">value:</span> <span class="v">/api</span>}
+      <span class="k">backendRefs:</span>
+        - <span class="k">name:</span> <span class="v">api-svc</span>
+          <span class="k">port:</span> <span class="n">8080</span></pre>
+        <p class="m-pangram">Съешь ещё этих булочек
+          <small>Широкая электрификация южных губерний даст мощный толчок подъёму сельского хозяйства.</small>
+          <span class="mono">GET /api/v1 · 200 OK · X-Envoy-Upstream: api-svc:8080</span>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ VARIANT 2 - EDITORIAL CONTRAST ============ -->
+  <section class="variant v-editorial">
+    <div class="variant-bar">
+      <span class="vn">02 / предложение</span>
+      <span class="vt">Editorial Contrast</span>
+      <span class="vtag ok">полная кириллица</span>
+    </div>
+    <div class="variant-meta">
+      <span><b>Display:</b> Playfair Display 600/700 ✓кир</span>
+      <span><b>Text:</b> Inter ✓кир</span>
+      <span><b>Mono:</b> JetBrains Mono ✓кир</span>
+    </div>
+    <p class="variant-note"><b>Сохраняет исходный замысел.</b> Playfair - высококонтрастный редакторский сериф
+      «в духе Fraunces», но с настоящей кириллицей. Inter - эталон UI-гротеска, нейтральный и очень читаемый.
+      Максимальный контраст «дисплей ↔ тело», журнальная эстетика остаётся. <b>Минимальная миграция</b> - меняются два шрифта, mono тот же.</p>
+    <div class="mock">
+      <div class="mock-left">
+        <div class="m-eyebrow">Reference · Gateway API</div>
+        <h1 class="m-h1">Envoy Gateway <em>интерактивный гайд</em></h1>
+        <p class="m-lede">Визуальный разбор для инженеров: как связаны CRD, каким путём идёт трафик
+          и где применяются политики. Кликайте узлы - раскрываются назначение, связи и пример
+          манифеста <code>HTTPRoute</code>.</p>
+        <div class="m-node">
+          <div class="nk">HTTPRoute</div>
+          <div class="nt">Маршрут HTTP-запросов</div>
+          <div class="ns">gateway.networking.k8s.io/v1</div>
+        </div>
+        <div>
+          <div class="m-sect">Характеристики</div>
+          <div class="m-fields">
+            <div class="m-field"><b>parentRefs</b> - привязка к <code>Gateway</code> и слушателю.</div>
+            <div class="m-field"><b>rules[].matches</b> - условия совпадения пути и заголовков.</div>
+          </div>
+        </div>
+        <div class="m-badges"><span class="m-badge">namespaced</span><span class="m-badge">v1 GA</span><span class="m-badge">SIG-Network</span></div>
+      </div>
+      <div class="mock-right">
+        <pre class="m-manifest"><span class="c"># маршрут «префикс /api → сервис»</span>
+<span class="k">apiVersion:</span> <span class="v">gateway.networking.k8s.io/v1</span>
+<span class="k">kind:</span> <span class="v">HTTPRoute</span>
+<span class="k">metadata:</span>
+  <span class="k">name:</span> <span class="v">api-route</span>
+<span class="k">spec:</span>
+  <span class="yk">parentRefs:</span>
+    - <span class="k">name:</span> <span class="v">eg-gateway</span>
+  <span class="k">rules:</span>
+    - <span class="k">matches:</span>
+        - <span class="k">path:</span> {<span class="k">value:</span> <span class="v">/api</span>}
+      <span class="k">backendRefs:</span>
+        - <span class="k">name:</span> <span class="v">api-svc</span>
+          <span class="k">port:</span> <span class="n">8080</span></pre>
+        <p class="m-pangram">Съешь ещё этих булочек
+          <small>Широкая электрификация южных губерний даст мощный толчок подъёму сельского хозяйства.</small>
+          <span class="mono">GET /api/v1 · 200 OK · X-Envoy-Upstream: api-svc:8080</span>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ VARIANT 3 - UNIFIED SUPERFAMILY ============ -->
+  <section class="variant v-plex">
+    <div class="variant-bar">
+      <span class="vn">03 / предложение</span>
+      <span class="vt">Unified System (IBM Plex)</span>
+      <span class="vtag ok">полная кириллица</span>
+    </div>
+    <div class="variant-meta">
+      <span><b>Display:</b> IBM Plex Serif 600 ✓кир</span>
+      <span><b>Text:</b> IBM Plex Sans ✓кир</span>
+      <span><b>Mono:</b> IBM Plex Mono ✓кир</span>
+    </div>
+    <p class="variant-note"><b>Одно суперсемейство.</b> Sans + Serif + Mono спроектированы вместе - идеальная гармония
+      и общий ритм. Инженерный, «технический» характер отлично ложится на инфраструктурный документ.
+      Кириллица полная во всех трёх. Контраст дисплей/тело мягче, чем у Playfair - спокойнее, системнее.</p>
+    <div class="mock">
+      <div class="mock-left">
+        <div class="m-eyebrow">Reference · Gateway API</div>
+        <h1 class="m-h1">Envoy Gateway <em>интерактивный гайд</em></h1>
+        <p class="m-lede">Визуальный разбор для инженеров: как связаны CRD, каким путём идёт трафик
+          и где применяются политики. Кликайте узлы - раскрываются назначение, связи и пример
+          манифеста <code>HTTPRoute</code>.</p>
+        <div class="m-node">
+          <div class="nk">HTTPRoute</div>
+          <div class="nt">Маршрут HTTP-запросов</div>
+          <div class="ns">gateway.networking.k8s.io/v1</div>
+        </div>
+        <div>
+          <div class="m-sect">Характеристики</div>
+          <div class="m-fields">
+            <div class="m-field"><b>parentRefs</b> - привязка к <code>Gateway</code> и слушателю.</div>
+            <div class="m-field"><b>rules[].matches</b> - условия совпадения пути и заголовков.</div>
+          </div>
+        </div>
+        <div class="m-badges"><span class="m-badge">namespaced</span><span class="m-badge">v1 GA</span><span class="m-badge">SIG-Network</span></div>
+      </div>
+      <div class="mock-right">
+        <pre class="m-manifest"><span class="c"># маршрут «префикс /api → сервис»</span>
+<span class="k">apiVersion:</span> <span class="v">gateway.networking.k8s.io/v1</span>
+<span class="k">kind:</span> <span class="v">HTTPRoute</span>
+<span class="k">metadata:</span>
+  <span class="k">name:</span> <span class="v">api-route</span>
+<span class="k">spec:</span>
+  <span class="yk">parentRefs:</span>
+    - <span class="k">name:</span> <span class="v">eg-gateway</span>
+  <span class="k">rules:</span>
+    - <span class="k">matches:</span>
+        - <span class="k">path:</span> {<span class="k">value:</span> <span class="v">/api</span>}
+      <span class="k">backendRefs:</span>
+        - <span class="k">name:</span> <span class="v">api-svc</span>
+          <span class="k">port:</span> <span class="n">8080</span></pre>
+        <p class="m-pangram">Съешь ещё этих булочек
+          <small>Широкая электрификация южных губерний даст мощный толчок подъёму сельского хозяйства.</small>
+          <span class="mono">GET /api/v1 · 200 OK · X-Envoy-Upstream: api-svc:8080</span>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ VARIANT 4 - MODERN GROTESQUE ============ -->
+  <section class="variant v-grotesque">
+    <div class="variant-bar">
+      <span class="vn">04 / предложение</span>
+      <span class="vt">Modern Grotesque (без серифа)</span>
+      <span class="vtag ok">полная кириллица</span>
+    </div>
+    <div class="variant-meta">
+      <span><b>Display:</b> Manrope 800 ✓кир</span>
+      <span><b>Text:</b> Manrope 400/500 ✓кир</span>
+      <span><b>Mono:</b> JetBrains Mono ✓кир</span>
+    </div>
+    <p class="variant-note"><b>Одно семейство, иерархия весом.</b> Серифа нет вовсе - заголовки отличаются
+      от тела только начертанием (800 против 400). Современный «продуктовый / дашбордовый» вид, меньше
+      шрифтов на загрузку. Хорошо, если хочется уйти от «журнальности» к строгому инженерному интерфейсу.</p>
+    <div class="mock">
+      <div class="mock-left">
+        <div class="m-eyebrow">Reference · Gateway API</div>
+        <h1 class="m-h1">Envoy Gateway <em>интерактивный гайд</em></h1>
+        <p class="m-lede">Визуальный разбор для инженеров: как связаны CRD, каким путём идёт трафик
+          и где применяются политики. Кликайте узлы - раскрываются назначение, связи и пример
+          манифеста <code>HTTPRoute</code>.</p>
+        <div class="m-node">
+          <div class="nk">HTTPRoute</div>
+          <div class="nt">Маршрут HTTP-запросов</div>
+          <div class="ns">gateway.networking.k8s.io/v1</div>
+        </div>
+        <div>
+          <div class="m-sect">Характеристики</div>
+          <div class="m-fields">
+            <div class="m-field"><b>parentRefs</b> - привязка к <code>Gateway</code> и слушателю.</div>
+            <div class="m-field"><b>rules[].matches</b> - условия совпадения пути и заголовков.</div>
+          </div>
+        </div>
+        <div class="m-badges"><span class="m-badge">namespaced</span><span class="m-badge">v1 GA</span><span class="m-badge">SIG-Network</span></div>
+      </div>
+      <div class="mock-right">
+        <pre class="m-manifest"><span class="c"># маршрут «префикс /api → сервис»</span>
+<span class="k">apiVersion:</span> <span class="v">gateway.networking.k8s.io/v1</span>
+<span class="k">kind:</span> <span class="v">HTTPRoute</span>
+<span class="k">metadata:</span>
+  <span class="k">name:</span> <span class="v">api-route</span>
+<span class="k">spec:</span>
+  <span class="yk">parentRefs:</span>
+    - <span class="k">name:</span> <span class="v">eg-gateway</span>
+  <span class="k">rules:</span>
+    - <span class="k">matches:</span>
+        - <span class="k">path:</span> {<span class="k">value:</span> <span class="v">/api</span>}
+      <span class="k">backendRefs:</span>
+        - <span class="k">name:</span> <span class="v">api-svc</span>
+          <span class="k">port:</span> <span class="n">8080</span></pre>
+        <p class="m-pangram">Съешь ещё этих булочек
+          <small>Широкая электрификация южных губерний даст мощный толчок подъёму сельского хозяйства.</small>
+          <span class="mono">GET /api/v1 · 200 OK · X-Envoy-Upstream: api-svc:8080</span>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ VARIANT 5 - WARM EDITORIAL ============ -->
+  <section class="variant v-warm">
+    <div class="variant-bar">
+      <span class="vn">05 / предложение</span>
+      <span class="vt">Warm Editorial</span>
+      <span class="vtag ok">полная кириллица</span>
+    </div>
+    <div class="variant-meta">
+      <span><b>Display:</b> Lora 600 ✓кир</span>
+      <span><b>Text:</b> Source Sans 3 ✓кир</span>
+      <span><b>Mono:</b> Fira Code ✓кир</span>
+    </div>
+    <p class="variant-note"><b>Мягкий редакторский тон.</b> Lora - тёплый каллиграфический сериф, менее «резкий»,
+      чем Playfair, отличная кириллица. Source Sans 3 - гуманистический гротеск (сдержаннее Inter).
+      Fira Code даёт слегка иной техно-характер моно. Ближе всего к текущему настроению «инженерный журнал», но целиком читаемо на русском.</p>
+    <div class="mock">
+      <div class="mock-left">
+        <div class="m-eyebrow">Reference · Gateway API</div>
+        <h1 class="m-h1">Envoy Gateway <em>интерактивный гайд</em></h1>
+        <p class="m-lede">Визуальный разбор для инженеров: как связаны CRD, каким путём идёт трафик
+          и где применяются политики. Кликайте узлы - раскрываются назначение, связи и пример
+          манифеста <code>HTTPRoute</code>.</p>
+        <div class="m-node">
+          <div class="nk">HTTPRoute</div>
+          <div class="nt">Маршрут HTTP-запросов</div>
+          <div class="ns">gateway.networking.k8s.io/v1</div>
+        </div>
+        <div>
+          <div class="m-sect">Характеристики</div>
+          <div class="m-fields">
+            <div class="m-field"><b>parentRefs</b> - привязка к <code>Gateway</code> и слушателю.</div>
+            <div class="m-field"><b>rules[].matches</b> - условия совпадения пути и заголовков.</div>
+          </div>
+        </div>
+        <div class="m-badges"><span class="m-badge">namespaced</span><span class="m-badge">v1 GA</span><span class="m-badge">SIG-Network</span></div>
+      </div>
+      <div class="mock-right">
+        <pre class="m-manifest"><span class="c"># маршрут «префикс /api → сервис»</span>
+<span class="k">apiVersion:</span> <span class="v">gateway.networking.k8s.io/v1</span>
+<span class="k">kind:</span> <span class="v">HTTPRoute</span>
+<span class="k">metadata:</span>
+  <span class="k">name:</span> <span class="v">api-route</span>
+<span class="k">spec:</span>
+  <span class="yk">parentRefs:</span>
+    - <span class="k">name:</span> <span class="v">eg-gateway</span>
+  <span class="k">rules:</span>
+    - <span class="k">matches:</span>
+        - <span class="k">path:</span> {<span class="k">value:</span> <span class="v">/api</span>}
+      <span class="k">backendRefs:</span>
+        - <span class="k">name:</span> <span class="v">api-svc</span>
+          <span class="k">port:</span> <span class="n">8080</span></pre>
+        <p class="m-pangram">Съешь ещё этих булочек
+          <small>Широкая электрификация южных губерний даст мощный толчок подъёму сельского хозяйства.</small>
+          <span class="mono">GET /api/v1 · 200 OK · X-Envoy-Upstream: api-svc:8080</span>
+        </p>
+      </div>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>
