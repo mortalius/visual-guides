@@ -150,8 +150,10 @@ rediscovered the hard way, and the next agent has no memory of this session.
 `buildCommand: ""` + a **mandatory** `buildFilter.paths` (without it, editing one guide rebuilds
 every site). A new guide needs a service there and a row in the root `README.md` table.
 
-The folder is published as-is, so `README.md`, `DESIGN.md`, `TODO.md`, `font-explore.html` and
-`.mcp.json` ship with the site as reachable URLs. Never put anything sensitive in a guide folder.
+The folder is published as-is, so `README.md`, `DESIGN.md`, `TODO.md` and `font-explore.html` ship
+with the site as reachable URLs. Never put anything sensitive in a guide folder - that is why
+`.mcp.json` lives at the repo root, which is not a `rootDir` of any service and therefore never
+served.
 
 **Render builds from GitHub, not from the working tree** - a local commit is invisible to it. Since
 this repo routinely carries unpushed commits and pushing needs to be asked for, publishing is the
@@ -170,6 +172,8 @@ deployed, Post Inspector not yet run. `traces-tempo` still has no OG tags.
 - Internal technical briefs (`*_visualization.md`, `*_brief.md`) are gitignored: they contain
   private repository links and cluster names. **Never commit or publish them**, even when the edit
   looks harmless. Their reasoning has been migrated into the READMEs and `DESIGN.md` files.
-- `envoy-gateway-visualization/.mcp.json` wires up the Render MCP server and takes its key from an
-  externally set `RENDER_API_KEY`. The key must never land in the repo. That config is only picked
-  up when the cwd is that folder.
+- `.mcp.json` at the repo root wires up the Render MCP server and takes its key from an externally
+  set `RENDER_API_KEY`. The key must never land in the repo. Two consequences of it being at the
+  root: it applies to work on any guide, and it is not inside a published `rootDir`. It is picked up
+  when a session starts with the repo root in scope - `export`ing the key mid-session does nothing,
+  the session has to be restarted.

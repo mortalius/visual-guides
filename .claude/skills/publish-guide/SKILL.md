@@ -52,10 +52,11 @@ Confirm the guide's service in `render.yaml`: `type: web`, `runtime: static`, `r
 `buildFilter` is **mandatory** - without it every guide rebuilds on any commit. `buildCommand` stays
 empty; any command there means a toolchain leaked into the series.
 
-Remember the folder publishes as-is: `README.md`, `DESIGN.md`, `TODO.md`, `font-explore.html` and
-`.mcp.json` all become reachable URLs. List the folder and read anything you would not want served
-before the first deploy. `.mcp.json` is safe **only because** the key is an unexpanded
-`${RENDER_API_KEY}` placeholder - verify that is still true rather than assuming it.
+Remember the folder publishes as-is: `README.md`, `DESIGN.md`, `TODO.md` and `font-explore.html` all
+become reachable URLs. **List the folder and read anything you would not want served** before the
+first deploy - `ls -a <guide>/`, dotfiles included. Only the guide directory is served, so
+repo-level config (`.mcp.json`, `.gitignore`, `render.yaml`) stays out of reach; keep it that way
+rather than moving config into a guide folder for convenience.
 
 ## 4. Deploy
 
@@ -66,10 +67,9 @@ user can act while you prepare the rest:
    a local commit is invisible to it. This repo routinely carries unpushed commits, and pushing
    still requires asking. So publishing is the one workflow where a push is part of the job: raise
    it early rather than at the end.
-2. **`RENDER_API_KEY` must be in the environment.** The MCP server in
-   `envoy-gateway-visualization/.mcp.json` expands it at **session start** and only when the cwd is
-   that folder - so `export`ing it mid-session does nothing. The user has to set it and restart
-   Claude Code from that directory. Say this explicitly; "set the key" alone leads to a restart
+2. **`RENDER_API_KEY` must be in the environment.** The MCP server in the root `.mcp.json` expands
+   it at **session start** - so `export`ing it mid-session does nothing; the user has to set it and
+   restart Claude Code. Say this explicitly, because "set the key" on its own leads to a restart
    nobody expected.
 
 If the Render tools are absent from the tool list, the key was not set. Ask - never write a key

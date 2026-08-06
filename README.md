@@ -37,6 +37,7 @@ DESIGN.md          общий визуальный закон; эталон то
 CONTRIBUTING.md    структура гайда, обязательная структура README, self-test, публикация
 CLAUDE.md          конвенции репы для агента (en)
 render.yaml        блюпринт Render
+.mcp.json          Render MCP; ключ - из внешней RENDER_API_KEY, подхват при старте сессии
 tools/             проверки
 .claude/skills/    процедуры: new-guide, guide-review, publish-guide
 <гайд>/README.md   файлы, навигация, контракты, типовые правки
