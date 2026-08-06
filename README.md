@@ -35,8 +35,10 @@ node tools/check-tokens.mjs <гайд>        # один
 ```
 DESIGN.md          общий визуальный закон; эталон токенов в блоках <!-- canonical:... -->
 CONTRIBUTING.md    структура гайда, обязательная структура README, self-test, публикация
+CLAUDE.md          конвенции репы для агента (en)
 render.yaml        блюпринт Render
 tools/             проверки
+.claude/skills/    процедуры: new-guide, guide-review, publish-guide
 <гайд>/README.md   файлы, навигация, контракты, типовые правки
 <гайд>/DESIGN.md   свои компоненты + отклонения от закона
 ```
