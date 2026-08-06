@@ -2,133 +2,144 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-Язык репозитория и документации - русский; комментарии в коде - английский.
+**Language split:** guide content and prose docs (`README.md`, `DESIGN.md`, `CONTRIBUTING.md`) are
+Russian - the audience is Russian-speaking. Code comments and commit messages are English. Keep
+writing each in its established language; do not translate existing docs.
 
-## Что это
+## What this is
 
-Монорепа статических визуальных гайдов. Каждая папка верхнего уровня со `styles.css` - отдельный
-гайд и отдельный сайт на Render. Сейчас их два: `envoy-gateway-visualization/`, `traces-tempo/`.
+A monorepo of static visual guides. Every top-level directory containing `styles.css` is one guide
+and one Render static site. Currently two: `envoy-gateway-visualization/`, `traces-tempo/`.
 
-**Без сборки** - принцип, а не текущее состояние: HTML + CSS + vanilla JS, никакого npm,
-бандлеров, фреймворков, препроцессоров. Единственная внешняя зависимость - Google Fonts.
-Не предлагать тулчейн, не добавлять `package.json`, не заполнять `buildCommand` в `render.yaml`.
+**No build step** - this is a principle, not just the current state: HTML + CSS + vanilla JS, no
+npm, no bundlers, no frameworks, no preprocessors. The only external dependency is Google Fonts.
+Do not propose a toolchain, do not add `package.json`, do not fill `buildCommand` in `render.yaml`.
+The point is that the artifact still opens in five years without reviving a toolchain.
 
-## Команды
-
-```bash
-cd <гайд> && python3 -m http.server        # → localhost:8000
-```
-
-Http-сервер обязателен для `envoy-gateway-visualization`: слои грузятся через `fetch`, на
-`file://` доска остаётся пустой (CORS).
+## Commands
 
 ```bash
-node tools/check-tokens.mjs                # все гайды; exit 1 при расхождениях
-node tools/check-tokens.mjs <гайд>         # один (принимает и абсолютный путь)
+cd <guide> && python3 -m http.server        # → localhost:8000
 ```
 
-Тестов и линтеров в привычном смысле нет. Проверок ровно две:
-`check-tokens.mjs` (статически: токены, семантические роли, ссылки на разделы) и `?selftest=1`
-в браузере (внутренние проверки гайда). Запускать обе перед коммитом.
+An http server is mandatory for `envoy-gateway-visualization`: layers are loaded via `fetch`,
+which CORS blocks on `file://` - opening the file directly leaves the board empty.
 
-`?selftest=1`: `traces-tempo` даёт баннер **36/36 passed**. У `envoy-gateway-visualization`
-self-test'а нет вопреки `CONTRIBUTING.md` §5 - главный техдолг, записан в его README.
+```bash
+node tools/check-tokens.mjs                 # all guides; exit 1 on drift
+node tools/check-tokens.mjs <guide>         # one guide (absolute paths accepted)
+```
 
-## Устройство гайда
+There are no tests or linters in the usual sense. There are exactly two checks:
+`check-tokens.mjs` (static: token values, semantic-role coverage, section references) and
+`?selftest=1` in the browser (the guide's own invariants). Run both before committing.
 
-Разделение слоёв одинаковое во всех гайдах и обязательное - оно позволяет править контент,
-не читая логику. Большинство правок должны требовать только `data.js`.
+`?selftest=1`: `traces-tempo` prints a banner reading **36/36 passed**.
+`envoy-gateway-visualization` has no self-test at all, contrary to `CONTRIBUTING.md` §5 - its
+main piece of tech debt, recorded in its README.
 
-| Файл | Роль |
+## How a guide is built
+
+The layer split is identical across guides and mandatory - it is what lets an agent edit content
+without reading logic. Most edits should touch only `data.js`.
+
+| File | Role |
 |------|------|
-| `index.html` | оболочка: шапка, навигация, легенда, панель, футер; схем в разметке нет или они вынесены |
-| `data.js` | контент-модель: чистые данные, без DOM |
-| `app.js` | поведение: навигация, выбор, диплинки, self-test |
-| `styles.css` | `:root` с токенами (физическая копия эталона) + компоненты |
+| `index.html` | shell: masthead, navigation, colour legend, side panel, footer. Diagram markup is absent or extracted |
+| `data.js` | content model: pure data, no DOM |
+| `app.js` | behaviour: navigation, selection, deep links, self-test |
+| `styles.css` | `:root` tokens (a physical copy of the canon) + components |
 
-Специфика: `envoy-gateway-visualization` выносит разметку разрезов в `layers/<name>.html`;
-`traces-tempo` выносит всю математику в `model.js` (чистые функции, единственный источник цифр).
+Guide-specific: `envoy-gateway-visualization` extracts each cross-section into
+`layers/<name>.html`; `traces-tempo` extracts all arithmetic into `model.js` (pure functions, the
+single source of every number shown).
 
-**Порядок загрузки - критический инвариант.** `app.js` вешает обработчики при загрузке, поэтому
-обязан идти последним, когда вся разметка уже в DOM.
+**Load order is a critical invariant.** `app.js` wires its handlers at load time, so it must come
+last, when all markup is already in the DOM.
 
-- envoy: `data.js` синхронно → `fetch` всех `layers/*.html` параллельно → инъекция в `#board` →
-  только затем динамическая подгрузка `app.js`. При упавшем `fetch` доска показывает ошибку, а
-  `app.js` не грузится вовсе. Благодаря этому `app.js` не знает про асинхронность.
-- tempo: `model.js` → `data.js` → `app.js` обычными тегами.
+- envoy: `data.js` synchronously → `fetch` all `layers/*.html` in parallel → inject into `#board`
+  → only then load `app.js` dynamically. If a `fetch` fails, the board renders an error and
+  `app.js` is never loaded. That is why `app.js` needs no awareness of the async bootstrap.
+- tempo: `model.js` → `data.js` → `app.js` as ordinary script tags.
 
-**Кэш-бастинг `?v=N` бампать при каждой правке ассетов**, иначе читатель получит старый файл.
-Версия дублируется в нескольких местах одного `index.html` и все обязаны совпадать: у envoy -
-`<link>` на `styles.css`, литерал у `data.js` и константа `V` в bootstrap (ей версионируются
-`app.js` и `layers/*.html`); у tempo - `<link>` и три тега скриптов. Число мест в README гайдов
-указано неточно у обоих - считать по `grep -n '?v=' index.html`, а не по описанию.
+**Bump the `?v=N` cache-bust on every asset edit**, or readers get a stale file. The version is
+duplicated across several places in one `index.html` and all of them must match: envoy has the
+`<link>` to `styles.css`, a literal on `data.js`, and the `V` constant in the bootstrap (which
+versions `app.js` and `layers/*.html`); tempo has the `<link>` plus three script tags. Both
+guides' READMEs state the number of places inaccurately - count with
+`grep -n '?v=' index.html` rather than trusting the prose.
 
-**Контракты по идентификаторам** - то, что ломается тихо. Записаны в `README.md` каждого гайда,
-секция «Ключевой контракт»; читать её перед правкой данных или разметки. Коротко: у envoy
-`data-node` ↔ ключ в `PANELS` и `data-f` ↔ `manifest.fields`; у tempo `MATRIX[act][lens]` ↔
-`RENDERERS` + `COPY`, `STATE.params` ↔ `KNOBS`, `{{ключ}}` в `CONFIGS` ↔ `STATE.params`.
+**ID-based contracts** are what breaks silently. Each guide's `README.md` documents them under
+«Ключевой контракт»; read that section before editing data or markup. In short - envoy:
+`data-node` ↔ a key in `PANELS`, `data-f` ↔ `manifest.fields`; tempo: `MATRIX[act][lens]` ↔
+`RENDERERS` + `COPY`, `STATE.params` ↔ `KNOBS`, `{{key}}` in `CONFIGS` ↔ `STATE.params`.
 
-## Документация как контракт
+## Documentation as contract
 
-Четыре документа, и разделение между ними жёсткое:
+Four documents with a strict division of labour:
 
 ```
-DESIGN.md          общий визуальный закон серии; эталон токенов в блоках <!-- canonical:... -->
-CONTRIBUTING.md    процесс: структура папки, обязательная структура README гайда, self-test, публикация
-<гайд>/README.md   представление и правки: файлы, навигация, контракты, типовые правки, проверка
-<гайд>/DESIGN.md   локальная надстройка: свои компоненты от §3.5 + секция отклонений
+DESIGN.md          the series-wide visual law; token canon lives in <!-- canonical:... --> blocks
+CONTRIBUTING.md    process: folder layout, the mandatory guide-README structure, self-test, publishing
+<guide>/README.md  presentation and edits: files, navigation, contracts, common edits, verification
+<guide>/DESIGN.md  local overlay: own components from §3.5 onward + the deviations section
 ```
 
-Правила, которые нельзя нарушать по неосторожности:
+Rules that must not be broken by accident:
 
-1. **Номера разделов `DESIGN.md` - стабильные идентификаторы.** На них ссылаются комментарии в
-   CSS/JS (`/* ... (DESIGN.md §3.11) */`). Перенумеровать раздел = сломать ссылки, которые никто
-   не перепроверит. Новое добавляется в конец. `§1`, `§2`, `§3.1-3.4`, `§4`, `§5` навсегда
-   принадлежат корневому закону; `§3.5` и далее - территория гайда. `check-tokens.mjs` проверяет,
-   что каждая ссылка из кода резолвится.
-2. **Токены копируются физически, а не шарятся.** Гайд самодостаточен - у сайтов нет общих
-   рантайм-зависимостей. Синхронность обеспечивает `check-tokens.mjs`, читающий эталон из
-   `<!-- canonical:... -->` блоков корневого `DESIGN.md`. Эталон правится там, потом копии.
-3. **Имена семантических токенов гайд выбирает сам, значения фиксированы.** `--accent-traffic`
-   (envoy) и `--accent-keep` (tempo) - одна роль «прошло успешно» с одним значением. Проверка
-   идёт по значению, не по имени. Соответствие обязано быть в локальном `DESIGN.md` §1.
-4. **Заголовки в README гайда фиксированы дословно** (`CONTRIBUTING.md` §3) - по ним
-   ориентируется агент, продолжающий работу. Порядок не менять, пустые секции не удалять.
-5. **Отклонение от закона допустимо, но записывается** - в локальный `DESIGN.md` §5 и в реестр
-   корневого `DESIGN.md` §6, с причиной. Незаписанное отклонение неотличимо от небрежности.
+1. **`DESIGN.md` section numbers are stable identifiers.** CSS/JS comments reference them
+   (`/* ... (DESIGN.md §3.11) */`). Renumbering a section breaks references nobody will re-check.
+   Append new material at the end. `§1`, `§2`, `§3.1–3.4`, `§4`, `§5` belong to the root law
+   permanently; `§3.5` onward is the guide's territory. `check-tokens.mjs` verifies that every
+   reference found in code resolves.
+2. **Tokens are copied physically, not shared.** A guide is self-contained - the sites share no
+   runtime dependency. Consistency is enforced by `check-tokens.mjs`, which reads the canon from
+   the `<!-- canonical:... -->` blocks of the root `DESIGN.md`. Edit the canon there first, then
+   the copies.
+3. **A guide picks its own semantic token names; the values are fixed.** `--accent-traffic`
+   (envoy) and `--accent-keep` (tempo) are the same role - "made it through" - with the same
+   value. The checker matches by value, not by name. The mapping must be recorded in the local
+   `DESIGN.md` §1.
+4. **The guide README's headings are fixed verbatim** (`CONTRIBUTING.md` §3) - an agent picking up
+   the work navigates by them. Do not reorder, do not delete an empty section (write "нет" with a
+   reason instead).
+5. **Deviating from the law is allowed, but must be recorded** - in the local `DESIGN.md` §5 and
+   in the registry at root `DESIGN.md` §6, with the reason. An unrecorded deviation is
+   indistinguishable from carelessness.
 
-## Ловушки
+## Traps
 
-- **SVG не переносит текст.** Длинная подпись молча вылезает за рамку узла. Не полагаться на
-  глаз: замер `getComputedTextLength()`, у tempo это часть self-test'а.
-- **Семантический токен ≠ категорийный, даже при равных значениях.** Особенно амберы:
-  `--accent-warning` `#b45309` и `--c-amber` `#d97706` - **разные значения**, не алиасы.
-- **Кириллица во всех шрифтах.** Латинские-only гарнитуры падают на системный фолбэк молча
-  (так в серии год простояли `Fraunces` + `Hanken Grotesk`). Проверять субсет до замены.
-- **Лимит наглядности ≤7-9 элементов** в поле зрения на схеме. Превышение - признак, что разрез
-  надо делить, а не мельчить.
-- **`favicon.ico 404`** - единственная допустимая ошибка в консоли.
+- **SVG does not wrap text.** A long label silently overflows its node box. Do not trust your
+  eyes: measure with `getComputedTextLength()` - in tempo this is part of the self-test.
+- **A semantic token is not a categorical one, even at equal values.** The ambers especially:
+  `--accent-warning` `#b45309` and `--c-amber` `#d97706` are **different values**, not aliases.
+- **Cyrillic coverage in every font.** Latin-only families fall back to system fonts silently -
+  `Fraunces` + `Hanken Grotesk` stood in the series that way for a long time. Check the subset
+  before swapping a family.
+- **Clarity limit of ≤7–9 elements** in view per diagram. Exceeding it means the cross-section
+  should be split, not shrunk.
+- **`favicon.ico 404`** is the only console error that is acceptable.
 
-## Выкатка
+## Deployment
 
-`render.yaml` - блюпринт, по сервису на гайд: `rootDir` + `staticPublishPath: .` +
-`buildCommand: ""` + **обязательный** `buildFilter.paths` (без него правка одного гайда
-пересобирает все). Новый гайд - сервис туда и строка в таблицу корневого `README.md`.
+`render.yaml` is the blueprint, one service per guide: `rootDir` + `staticPublishPath: .` +
+`buildCommand: ""` + a **mandatory** `buildFilter.paths` (without it, editing one guide rebuilds
+every site). A new guide needs a service there and a row in the root `README.md` table.
 
-Папка публикуется как есть, поэтому в сайт попадают и `README.md`, `DESIGN.md`, `TODO.md`,
-`font-explore.html`. Ничего чувствительного в папку гайда не кладём.
+The folder is published as-is, so `README.md`, `DESIGN.md`, `TODO.md` and `font-explore.html` ship
+with the site. Never put anything sensitive in a guide folder.
 
-Чек-лист перед публикацией (OG-теги, превью 1200×627, Post Inspector) - `CONTRIBUTING.md` §6.
-Оба гайда сейчас не задеплоены и **не имеют OG-тегов** - это блокер публикации.
+The pre-publication checklist (OG tags, 1200×627 preview, Post Inspector) is `CONTRIBUTING.md` §6.
+Both guides are currently undeployed and **have no OG tags** - that is the publishing blocker.
 
-## Коммиты и безопасность
+## Commits and safety
 
-- Одна логическая правка - один коммит. Сообщение по-английски, императив в заголовке, тело о
-  причине. Не смешивать правку контента с переработкой стиля.
-- **Не пушить без явной просьбы.** В репе бывают неотправленные коммиты - это норма.
-- Внутренние технические брифы (`*_visualization.md`, `*_brief.md`) в `.gitignore`: содержат
-  ссылки на приватные репозитории и имена кластеров. **Не коммитить и не публиковать**, даже
-  если правка кажется безобидной. Обоснования из них переехали в README и `DESIGN.md`.
-- `envoy-gateway-visualization/.mcp.json` подключает Render MCP и берёт ключ из внешней
-  переменной `RENDER_API_KEY`. Ключ в репу не попадает и не должен. Конфиг подхватывается
-  только когда cwd - эта папка.
+- One logical change per commit. English message, imperative subject, body explaining why rather
+  than listing files. Do not mix a content edit with a styling rework.
+- **Do not push unless explicitly asked.** Unpushed commits in this repo are normal.
+- Internal technical briefs (`*_visualization.md`, `*_brief.md`) are gitignored: they contain
+  private repository links and cluster names. **Never commit or publish them**, even when the edit
+  looks harmless. Their reasoning has been migrated into the READMEs and `DESIGN.md` files.
+- `envoy-gateway-visualization/.mcp.json` wires up the Render MCP server and takes its key from an
+  externally set `RENDER_API_KEY`. The key must never land in the repo. That config is only picked
+  up when the cwd is that folder.
