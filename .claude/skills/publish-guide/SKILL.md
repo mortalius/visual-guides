@@ -89,6 +89,18 @@ Deploying is outward-facing and creates public infrastructure: confirm with the 
 triggering it, and confirm again before any custom-domain change - the domain ends up in the OG
 tags and in every shared link.
 
+**Create the service from the dashboard, not the MCP.** `create_static_site` takes neither
+`rootDir` nor `buildFilter`, so a service created that way is not blueprint-managed and
+`render.yaml` becomes decorative. Send the user to Dashboard → New Blueprint Instance → the repo;
+Render reads `render.yaml` and creates **every** service in it at once. Say so up front: that means
+sibling guides go live too, so check whether any of them is unready to be seen (no OG tags, console
+404s) and tell the user which URLs exist but should not be shared yet.
+
+MCP tools are for verification afterwards - `list_services`, `list_deploys` - and each needs an
+explicit `workspaceId`; ask which workspace if the account has more than one, never guess.
+A 404 on the target `onrender.com` host does not mean the name is reserved: Render answers its
+entire wildcard domain, and nothing holds a subdomain until the service exists.
+
 After the first deploy, fetch the live URL and verify: the page renders (not a 404 from a wrong
 `staticPublishPath`), assets load over https, and the OG tags in the served HTML carry the real
 host - not a placeholder.
