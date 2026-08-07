@@ -79,13 +79,35 @@ In practice: compare each label's `getComputedTextLength()` against its node `re
 check nothing exceeds the `viewBox`. tempo automates this; for envoy do it explicitly after any
 label, font, or size change.
 
-## 4. Responsive
+## 4. The share preview - check it even when not publishing
+
+These guides exist to be posted on LinkedIn, so the OG block is part of the page, not a publication
+afterthought (`DESIGN.md` §5 lists it in the mandatory minimum). It is worth checking on every
+review because every failure here is invisible on the page itself:
+
+```bash
+grep -nE 'og:(url|image|title|description)|twitter:card' <guide>/index.html
+```
+
+- **Absolute URLs only.** A relative `og:image` yields no preview at all, silently.
+- **The host must be this guide's own.** A guide scaffolded from a donor inherits the donor's host
+  and preview image - the page looks perfect and the share card advertises the wrong guide.
+- **`og:image` must resolve to a file that exists** and be 1200×627. Check both:
+  `ls <guide>/og-preview.png` and its real dimensions - a placeholder that 404s is a blank card.
+- **The image must still match the content.** It is a screenshot; a layer that got redesigned makes
+  it a picture of a guide that no longer exists. This is the one that rots quietly - flag it
+  whenever a reviewed edit touched the cross-section shown in the preview.
+
+If the guide has no OG tags at all, say so as a finding rather than skipping the section:
+`traces-tempo` reached production without them and is live-but-unshareable as a result.
+
+## 5. Responsive
 
 Check at **1400px and 380px**. Required: no horizontal scroll on the *page*, wide diagrams scroll
 inside their own wrapper, the side panel moves below, nothing clipped. Take screenshots at both -
 they are gitignored, so do not commit them.
 
-## 5. Content pass - the part no script can do
+## 6. Content pass - the part no script can do
 
 - **Does it read without the author?** Walk every cross-section looking for a place that needs
   outside knowledge not explained on the page. The guide gets published where there is nobody to
@@ -95,7 +117,7 @@ they are gitignored, so do not commit them.
 - The educational disclaimer sits where people look, not only in the footer.
 - Colour legend covers every role actually used. An undocumented colour is a cipher.
 
-## 6. Report
+## 7. Report
 
 State separately: what passed mechanically, what you verified in the browser, what you checked by
 hand because automation is missing, and **what you did not check**. If the self-test is absent or a

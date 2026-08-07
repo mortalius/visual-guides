@@ -43,6 +43,14 @@ skeleton.
 3. **Strip content, keep the skeleton.** Empty out `data.js` down to its structure with one
    worked example entry per shape. In `index.html` keep masthead, nav container, legend, panel,
    footer; delete topical text. Do not yet touch `app.js`.
+   **The OG block is the dangerous part of a copy.** If the donor is
+   `envoy-gateway-visualization`, its `og:url` and `og:image` are absolute URLs pointing at
+   `envoy-gateway-guide.onrender.com` - copied verbatim, the new guide advertises the donor's title
+   and the donor's preview image, and nothing on the page looks wrong. Retarget `og:url`,
+   `og:image`, `og:title`, `og:description`, `og:image:alt` and `<title>`/`<meta description>` to
+   the new guide's own host in the same edit as the copy, and delete the inherited `og-preview.png`
+   so a stale image cannot ship. Leave `og:image` pointing at a file you have not made yet only if
+   you record it in `TODO.md` - see the OG step in `publish-guide`.
 4. `:root` in `styles.css`: keep the canonical blocks byte-identical (they came from the donor,
    which passes the check). Rename the semantic accents to this guide's vocabulary - the values
    are fixed, the names are yours (`DESIGN.md` §1).
@@ -57,9 +65,15 @@ skeleton.
    and the deviations section (§5). §3.1–3.4 are reserved series-wide forever - code comments
    point at them.
 9. Register: a service in `render.yaml` (`rootDir` + `buildFilter.paths`, `buildCommand: ""`) and a
-   row in the root `README.md` table with «не задеплоен».
-10. Add any deviations to the registry in root `DESIGN.md` §6.
-11. Only then write real content, `data.js` first.
+   row in the root `README.md` table with «не задеплоен». Note that applying the blueprint deploys
+   **every** service in it, so a guide registered here goes live the next time anyone publishes a
+   sibling - which is why the OG block has to be right by then, not just before its own post.
+10. Add the guide's OG work to its `TODO.md`: the 1200×627 preview and the Post Inspector run.
+    These are the two publication steps that cannot be done at scaffold time - the preview needs
+    real content to screenshot, and the inspector needs a live URL. Writing them down now is what
+    stops a guide reaching Render with no preview, the way `traces-tempo` did.
+11. Add any deviations to the registry in root `DESIGN.md` §6.
+12. Only then write real content, `data.js` first.
 
 ## Non-negotiables while scaffolding
 
