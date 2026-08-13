@@ -19,8 +19,12 @@
 
           <!-- edges -->
           <g class="edge config owns"><path d="M258,150 C300,128 350,116 392,104" marker-end="url(#ar-cfg)"/><text class="edge-label" x="316" y="116" text-anchor="middle">controllerName · владеет</text></g>
-          <g class="edge"><path d="M290,186 C440,168 540,168 668,186" marker-end="url(#ar)"/><text class="edge-label" x="480" y="168" text-anchor="middle">parametersRef</text></g>
+          <g class="edge"><path d="M290,186 C440,168 540,168 668,186" marker-end="url(#ar)"/><text class="edge-label" x="480" y="168" text-anchor="middle">parametersRef · весь класс</text></g>
           <g class="edge"><path d="M170,330 C160,296 160,272 170,240" marker-end="url(#ar)"/><text class="edge-label" x="170" y="288" text-anchor="middle">gatewayClassName</text></g>
+          <!-- second attachment point for EnvoyProxy: a Gateway may reference its own, bypassing
+               the class-wide default. Routed through the free band between the two node rows;
+               starts at x=250 to clear the gatewayClassName label sitting at x~120-220, y~288. -->
+          <g class="edge"><path d="M250,330 C250,300 258,286 300,286 L740,286 C784,286 788,272 788,241" marker-end="url(#ar)"/><text class="edge-label" x="520" y="274" text-anchor="middle">infrastructure.parametersRef · опц.</text></g>
           <!-- gaps between the bottom-row nodes are narrower than these labels, so
                lift them above the arrow into clear space (else the later-drawn node boxes cover the ends) -->
           <g class="edge"><path d="M368,366 C336,366 318,366 292,366" marker-end="url(#ar)"/><text class="edge-label" x="331" y="320" text-anchor="middle">parentRefs</text></g>
@@ -93,5 +97,17 @@
           <span class="lg"><span class="lg-line"></span> ссылка через поле spec (<code>*Ref</code>)</span>
           <span class="lg"><span class="lg-line owns"></span> владение: контроллер владеет классом (не ссылка, не трафик)</span>
           <span class="lg"><span class="lg-line blue"></span> привязка политик (см. слой «Политики»)</span>
+        </div>
+        <!-- schema-level remark (DESIGN.md §3.13): the two attachment points are a property of the
+             edge pair, not of one node. Detail deliberately NOT repeated here - how the levels
+             combine belongs to the EnvoyProxy panel, mode comparison to the Deployment layer. -->
+        <div class="callout">
+          <b>Две точки привязки EnvoyProxy.</b> На него ссылаются с <code>GatewayClass</code>
+          (инфраструктура на весь класс) и/или с конкретного <code>Gateway</code> -
+          <code>spec.infrastructure.parametersRef</code>; уровень Gateway перекрывает класс.
+          У ссылки с Gateway <b>нет поля <code>namespace</code></b>, поэтому EnvoyProxy обязан лежать
+          в namespace этого Gateway. Режим <code>mergeGateways: true</code> живёт только на уровне
+          класса и ссылку с Gateway запрещает. Как складываются уровни - в панели EnvoyProxy,
+          сравнение режимов - на слое «Развёртывание».
         </div>
       </div>

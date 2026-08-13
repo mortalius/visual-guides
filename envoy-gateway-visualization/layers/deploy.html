@@ -152,7 +152,11 @@
           <article class="dp-card dp-card-dedicated">
             <header><span class="dp-badge" style="--g:var(--c-emerald)">режим 1</span><h3>Gateway per Service</h3></header>
             <dl>
-              <dt>Топология</dt><dd>Каждый <code>Gateway</code> → свой Deployment Envoy + свой Service (NLB) + свой IP.</dd>
+              <dt>Топология</dt><dd>Каждый <code>Gateway</code> → свой Deployment Envoy + свой Service (NLB) + свой IP.
+                Инфраструктуру каждому задают отдельно - <code>spec.infrastructure.parametersRef</code> на свой
+                <code>EnvoyProxy</code> в том же namespace; отдельный <code>GatewayClass</code> под каждый Gateway
+                для этого не нужен. Привязка EnvoyProxy к классу как раз <b>не рекомендуется</b>, когда Gateway
+                одного класса должны получить разную инфраструктуру.</dd>
               <dt>Сертификаты</dt><dd>Свои <code>listeners[].tls.certificateRefs</code> у каждого Gateway; терминация независима, свои Secret'ы.</dd>
               <dt class="pro">Плюсы</dt>
               <dd class="pro"><ul class="dp-list">
@@ -171,7 +175,11 @@
           <article class="dp-card dp-card-merged">
             <header><span class="dp-badge" style="--g:var(--c-amber)">режим 2</span><h3>Merged Gateways</h3></header>
             <dl>
-              <dt>Топология</dt><dd>Флаг <code>mergeGateways: true</code> в <code>EnvoyProxy</code> (через <code>GatewayClass.parametersRef</code>) → все Gateway класса сливаются в <b>один</b> Deployment + один Service/LB + один IP.</dd>
+              <dt>Топология</dt><dd>Флаг <code>mergeGateways: true</code> в <code>EnvoyProxy</code> (через <code>GatewayClass.parametersRef</code>) → все Gateway класса сливаются в <b>один</b> Deployment + один Service/LB + один IP.
+                Инфраструктура - одна на весь класс, и только оттуда: при <code>mergeGateways: true</code> per-Gateway
+                привязка <code>spec.infrastructure.parametersRef</code> <b>запрещена</b>. Режимы 1 и 2 взаимоисключающие:
+                выбрав свой <code>EnvoyProxy</code> на каждый Gateway, merged вы себе закрыли, и обратно это только
+                через возврат привязки на класс.</dd>
               <dt>Сертификаты</dt><dd>По-прежнему per-listener <code>certificateRefs</code>, но терминируются на общем флоте; нужный серт выбирается по SNI.</dd>
               <dt class="pro">Плюсы</dt>
               <dd class="pro"><ul class="dp-list">
@@ -185,12 +193,13 @@
                 <li>Общий blast radius: проблема одного листенера бьёт по общему флоту (noisy neighbor).</li>
                 <li>Масштабирование и инфра-настройки - общие на класс.</li>
                 <li><code>ClientTrafficPolicy</code> всё равно применяется per-Gateway.</li>
+                <li>Gateway с непустым <code>infrastructure.parametersRef</code> получит <code>Accepted=False</code> / <code>InvalidParameters</code>: своей инфраструктуры у Gateway в этом режиме быть не может.</li>
                 <li>Механизм EG-specific, появился до поддержки ListenerSet в Gateway API.</li>
               </ul></dd>
             </dl>
             <!-- lives inside this card: the flag exists only in the merged mode -->
             <div class="dp-yaml">
-              <div class="dp-yaml-head">Флаг задаётся в <code>EnvoyProxy</code>, на который ссылается <code>GatewayClass.parametersRef</code> - то есть действует на весь класс сразу:</div>
+              <div class="dp-yaml-head">Флаг задаётся в <code>EnvoyProxy</code>, на который ссылается <code>GatewayClass.parametersRef</code> - то есть действует на весь класс сразу и <b>только</b> оттуда: в EnvoyProxy, привязанном к отдельному <code>Gateway</code>, включить его нельзя:</div>
               <pre class="manifest-pre">apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: EnvoyProxy
 metadata:

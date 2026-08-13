@@ -52,7 +52,7 @@ const PANELS = {
     lead:'Шаблон («класс») шлюзов, обслуживаемый конкретным контроллером. Аналог StorageClass: сам ничего не создаёт, но задаёт, какой контроллер и с какой базовой конфигурацией (EnvoyProxy) обрабатывает Gateway этого класса.',
     fields:[
       ['spec.controllerName','Идентификатор контроллера-владельца. Для EG - <code>gateway.envoyproxy.io/gatewayclass-controller</code>.'],
-      ['spec.parametersRef','Ссылка на <code>EnvoyProxy</code> - базовые настройки data plane для всех Gateway класса.']
+      ['spec.parametersRef','Ссылка на <code>EnvoyProxy</code> - базовые настройки data plane для всех Gateway класса. Отдельный Gateway может перекрыть её своей.']
     ],
     refs:[
       ['out','ссылается на','EnvoyProxy','parametersRef'],
@@ -73,7 +73,7 @@ spec:
     namespace: envoy-gateway-system`,
       fields:{
         controllerName:{purpose:'Строка, по которой контроллер «узнаёт» свои GatewayClass и берёт их в обработку.',links:['Совпадает с controllerName, на который отвечает Envoy Gateway Controller'],impact:'Если не совпадёт - ни один контроллер не возьмёт класс, Gateway останется без data plane.',failure:'Опечатка в строке → GatewayClass не принят ни одним контроллером, статус <code>Accepted=False</code>; все Gateway этого класса зависают без подов Envoy.'},
-        parametersRef:{purpose:'Указывает EnvoyProxy с базовой конфигурацией инфраструктуры прокси для всех Gateway этого класса.',links:['→ EnvoyProxy (kind: EnvoyProxy)'],impact:'Задаёт тип Service (LoadBalancer/NLB), реплики, ресурсы, телеметрию для всего класса.',failure:'Ссылка на несуществующий EnvoyProxy → применяются дефолты (ClusterIP вместо LoadBalancer), внешний вход может не подняться.'}
+        parametersRef:{purpose:'Указывает EnvoyProxy с базовой конфигурацией инфраструктуры прокси для всех Gateway этого класса. Это <b>не единственная</b> точка привязки: тот же EnvoyProxy можно указать на отдельном Gateway через <code>spec.infrastructure.parametersRef</code>, и уровень Gateway перекрывает класс.',links:['→ EnvoyProxy (kind: EnvoyProxy)','↔ Gateway.spec.infrastructure.parametersRef - вторая точка привязки, приоритет выше'],impact:'Задаёт тип Service (LoadBalancer/NLB), реплики, ресурсы, телеметрию для всего класса. Здесь - и <b>только</b> здесь - работает <code>mergeGateways: true</code>. Привязка на уровне класса не рекомендуется, если у Gateway одного класса должна быть разная инфраструктура.',failure:'Ссылка на несуществующий EnvoyProxy → применяются дефолты (ClusterIP вместо LoadBalancer), внешний вход может не подняться. <code>namespace</code> здесь опционален, но при его отсутствии EG ищет EnvoyProxy в namespace <code>default</code>, а не рядом с собой.'}
       }
     }
   },
@@ -83,10 +83,11 @@ spec:
     fields:[
       ['spec.gatewayClassName','К какому GatewayClass принадлежит (определяет контроллер и базовый EnvoyProxy).'],
       ['spec.listeners[]','Порт, протокол, hostname, TLS и <code>allowedRoutes</code>.'],
-      ['spec.infrastructure.parametersRef','Опционально свой <code>EnvoyProxy</code> для этого Gateway.']
+      ['spec.infrastructure.parametersRef','Опционально свой <code>EnvoyProxy</code> для этого Gateway - перекрывает привязку класса. Ссылка namespace-local: EnvoyProxy обязан лежать в namespace Gateway.']
     ],
     refs:[
       ['out','ссылается на','GatewayClass','gatewayClassName'],
+      ['out','ссылается на','EnvoyProxy','infrastructure.parametersRef'],
       ['in','привязан к','HTTPRoute','parentRefs'],
       ['in','добавляет листенеры','ListenerSet','parentRef'],
       ['in','целится в','ClientTrafficPolicy','targetRefs']
@@ -98,6 +99,11 @@ metadata:
   name: hero-gw
 spec:
   <span class="yk" data-f="gatewayClassName">gatewayClassName</span>: <span class="v">eg</span>
+  <span class="yk" data-f="infrastructure">infrastructure</span>:      <span class="c"># опц.</span>
+    parametersRef:   <span class="c"># namespace нет</span>
+      group: gateway.envoyproxy.io
+      kind: EnvoyProxy
+      name: hero-proxy-config
   <span class="yk" data-f="listeners">listeners</span>:
     - name: https
       protocol: HTTPS
@@ -109,6 +115,7 @@ spec:
             name: hero-tls`,
       fields:{
         gatewayClassName:{purpose:'Привязывает Gateway к GatewayClass - так выбирается контроллер и базовый EnvoyProxy.',links:['→ GatewayClass (spec.controllerName, spec.parametersRef)'],impact:'Определяет, какой контроллер развернёт data plane и с какой инфраструктурной конфигурацией.',failure:'Имя несуществующего класса → Gateway остаётся <code>Accepted=False</code>, поды Envoy не создаются.'},
+        infrastructure:{purpose:'Вторая точка привязки <code>EnvoyProxy</code>: инфраструктура именно этого Gateway, а не всего класса. Ровно то, чем разводят Gateway по своим NLB, не заводя отдельный GatewayClass под каждый.',links:['→ EnvoyProxy (kind: EnvoyProxy, тот же namespace)','↔ GatewayClass.spec.parametersRef - привязка на весь класс, приоритет ниже'],impact:'Перекрывает EnvoyProxy класса: по умолчанию заменяет его целиком, а <code>spec.mergeType</code> в EnvoyProxy (<code>StrategicMerge</code>/<code>JSONMerge</code>, с EG v1.8) сливает уровни послойно. Тип ссылки - <code>LocalParametersReference</code>, поля <code>namespace</code> у неё <b>нет</b>: отсюда требование держать Gateway и его EnvoyProxy в одном namespace.',failure:'EnvoyProxy не найден в namespace Gateway → <code>Accepted=False</code> с причиной <code>InvalidParameters</code>. То же - если на EnvoyProxy класса включён <code>mergeGateways: true</code>: тогда это поле обязано быть пустым, иначе Gateway не принят.'},
         listeners:{purpose:'Список точек прослушивания: порт, протокол, hostname, разрешённые маршруты.',links:['← HTTPRoute.parentRefs (по name листенера через sectionName)','← ClientTrafficPolicy (sectionName для конкретного листенера)'],impact:'Определяет, какие порты/протоколы открыты и какие маршруты можно привязать.',failure:'<code>allowedRoutes</code> уже, чем ожидалось → HTTPRoute не аттачится (<code>ResolvedRefs</code>/<code>Accepted=False</code>); трафик 404.'},
         tls:{purpose:'Настройка терминации TLS на листенере: режим и ссылки на сертификаты.',links:['→ Secret (certificateRefs)'],impact:'mode: Terminate - Envoy расшифровывает TLS на входе; клиентский трафик далее идёт внутри как HTTP.',failure:'Отсутствует/просрочен Secret из <code>certificateRefs</code> → листенер :443 не программируется, TLS-handshake рвётся.'}
       }
@@ -233,12 +240,15 @@ spec:
     fields:[
       ['spec.provider.kubernetes','envoyDeployment / envoyService (тип LB, аннотации NLB).'],
       ['spec.bootstrap','Патчи bootstrap Envoy.'],
-      ['spec.telemetry','Метрики, логи доступа, трейсинг.']
+      ['spec.telemetry','Метрики, логи доступа, трейсинг.'],
+      ['spec.mergeGateways','Слить все Gateway класса в один флот (только при привязке к GatewayClass).'],
+      ['spec.mergeType','Как этот EnvoyProxy сливается с менее специфичным уровнем.']
     ],
     refs:[
-      ['in','ссылается на','GatewayClass','parametersRef'],
-      ['in','ссылается на','Gateway','infrastructure.parametersRef']
+      ['in','ссылается на','GatewayClass','parametersRef · весь класс'],
+      ['in','ссылается на','Gateway','infrastructure.parametersRef · один Gateway']
     ],
+    note:'<b>Две точки привязки, а не выбор из двух.</b> EG складывает до трёх уровней - дефолты из конфига <code>EnvoyGateway</code> → EnvoyProxy класса → EnvoyProxy этого Gateway; каждый следующий по умолчанию <b>заменяет</b> предыдущий целиком, послойное слияние включает <code>spec.mergeType</code> (с EG v1.8). Привязка к классу не рекомендуется, если Gateway одного класса должны получить разную инфраструктуру. Исключение жёсткое: <code>mergeGateways: true</code> живёт только на уровне класса и запрещает <code>Gateway.spec.infrastructure.parametersRef</code> - режимы «один флот на класс» и «своя инфраструктура на Gateway» взаимоисключающие.',
     manifest:{
       yaml:`apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: EnvoyProxy
@@ -246,6 +256,8 @@ metadata:
   name: proxy-config
   namespace: envoy-gateway-system
 spec:
+  <span class="yk" data-f="mergeGateways">mergeGateways</span>: <span class="v">false</span>   <span class="c"># true - только у класса</span>
+  <span class="yk" data-f="mergeType">mergeType</span>: <span class="v">StrategicMerge</span>   <span class="c"># иначе Replace</span>
   <span class="yk" data-f="provider">provider</span>:
     type: Kubernetes
     kubernetes:
@@ -259,7 +271,9 @@ spec:
     metrics:
       prometheus: {}`,
       fields:{
-        provider:{purpose:'Как провижинить data plane (обычно Kubernetes): деплой, сервис, ресурсы.',links:['← GatewayClass.parametersRef','← Gateway.infrastructure.parametersRef'],impact:'Определяет саму «оболочку» прокси, а не поведение запросов.'},
+        mergeGateways:{purpose:'Слить листенеры всех Gateway класса в один флот Envoy: один Deployment, один Service/LB, один внешний IP.',links:['← только GatewayClass.parametersRef','⊘ несовместимо с Gateway.spec.infrastructure.parametersRef','↔ ListenerSet - Gateway API-native альтернатива, см. слой «Развёртывание»'],impact:'Тройка <code>(port, protocol, hostname)</code> становится уникальной на весь класс; дубликат листенера отклоняется по timestamp. Выбрав per-Gateway привязку EnvoyProxy, этот режим вы себе закрыли - и наоборот.',failure:'Включён на EnvoyProxy класса, а у Gateway при этом задан <code>infrastructure.parametersRef</code> → Gateway не принят: <code>Accepted=False</code>, причина <code>InvalidParameters</code>.'},
+        mergeType:{purpose:'Как этот EnvoyProxy складывается с менее специфичным уровнем иерархии «дефолты EnvoyGateway → GatewayClass → Gateway». Появился в EG v1.8.',links:['← Gateway.infrastructure.parametersRef (уровень с приоритетом)','← GatewayClass.parametersRef (базовый уровень)'],impact:'Без этого поля - <code>Replace</code>: более специфичный EnvoyProxy заменяет менее специфичный <b>целиком</b>, а не по полям. <code>StrategicMerge</code>/<code>JSONMerge</code> дают послойное слияние - только так класс работает как «дефолты, которые Gateway правит частично».',failure:'Ожидали слияния, а получили Replace → настройки класса (телеметрия, аннотации LB) молча пропадают у того Gateway, который завёл свой EnvoyProxy.'},
+        provider:{purpose:'Как провижинить data plane (обычно Kubernetes): деплой, сервис, ресурсы.',links:['← GatewayClass.parametersRef (весь класс)','← Gateway.infrastructure.parametersRef (один Gateway, приоритет выше)'],impact:'Определяет саму «оболочку» прокси, а не поведение запросов.'},
         envoyService:{purpose:'Тип и аннотации Service перед подами Envoy.',links:['→ AWS NLB через аннотации'],impact:'type: LoadBalancer + nlb-аннотация создаёт публичный AWS NLB как точку входа.'},
         envoyDeployment:{purpose:'Реплики и ресурсы Deployment подов Envoy.',links:[],impact:'replicas масштабирует data plane; влияет на пропускную способность и отказоустойчивость.'},
         telemetry:{purpose:'Метрики, access-логи, трейсинг прокси.',links:[],impact:'Включает Prometheus-метрики/логи - на маршрутизацию не влияет, только на наблюдаемость.'}

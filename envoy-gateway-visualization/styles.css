@@ -261,6 +261,10 @@ svg.diagram{width:100%;height:auto;display:block;}
 .lg-line.cfg{border-top-style:dashed;border-color:var(--text-3);}
 .lg-line.owns{border-top-style:dotted;border-top-width:3px;border-color:var(--c-violet);}
 .legend code{font-family:var(--mono);font-size:11px;background:var(--accent-manifest-weak);color:var(--primary);padding:1px 4px;border-radius:4px;}
+/* a .callout (DESIGN.md §3.12) may also sit under a diagram, not only in the side panel:
+   for a remark that qualifies the whole schema rather than one node. Needs the gap the
+   side-panel flow provides for free. */
+.legend + .callout{margin-top:var(--s-md);}
 
 /* ---------- traffic stepper: progress bar ---------- */
 .stepper{margin-top:var(--s-lg);background:var(--bg-surface-2);border:1px solid var(--border-faint);border-radius:var(--radius);padding:var(--s-md);}
@@ -585,7 +589,11 @@ svg.diagram.cp-shown .cp-band{opacity:1;pointer-events:auto;}
 .dp-card dt:first-child{margin-top:0;}
 /* One card at full board width → put Плюсы and Подводные камни side by side.
    Explicit rows: every card starts with exactly two full-width dt/dd pairs
-   (Топология, Сертификаты) = rows 1-4, so pro/con share rows 5-6. */
+   (Топология, Сертификаты) = rows 1-4, so pro/con share rows 5-6.
+   That row count is an invariant, and breaking it fails silently: a third dt/dd
+   pair claims rows 5-6, auto-placement flows Сертификаты BELOW the pro/con
+   columns, and the card still renders - just in the wrong order. Extending a
+   card? Fold the text into an existing dd, or rework this block for all three. */
 @media (min-width:721px){
   .dp-card dl{grid-template-columns:1fr 1fr;column-gap:var(--s-xl);}
   .dp-card dt,.dp-card dd{grid-column:1/-1;}          /* Топология / Сертификаты: full width */
