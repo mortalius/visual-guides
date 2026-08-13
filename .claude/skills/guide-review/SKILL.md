@@ -104,8 +104,14 @@ If the guide has no OG tags at all, say so as a finding rather than skipping the
 ## 5. Responsive
 
 Check at **1400px and 380px**. Required: no horizontal scroll on the *page*, wide diagrams scroll
-inside their own wrapper, the side panel moves below, nothing clipped. Take screenshots at both -
-they are gitignored, so do not commit them.
+inside their own wrapper, the side panel moves below, nothing clipped. Take screenshots at both.
+
+**Pass an absolute path under `.playwright-mcp/` for every screenshot and evaluate-to-file.** That
+directory is gitignored; a bare filename is written relative to the **repo root** instead, where
+only a few name patterns were ignored - `crd-layer.png` landed as untracked. `/*.png` and `/*.txt`
+at the root are ignored now, but the path outside the repo is refused outright ("outside allowed
+roots"), so the absolute in-repo path is the only form that both works and stays uncommitted.
+Check `git status --short` before committing regardless.
 
 ## 6. Content pass - the part no script can do
 
