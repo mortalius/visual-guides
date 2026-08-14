@@ -164,6 +164,12 @@ served.
 this repo routinely carries unpushed commits and pushing needs to be asked for, publishing is the
 one workflow where a push is part of the job. Raise it early.
 
+**And the push does not start the build.** `envoy-gateway-guide` has `autoDeploy: yes` /
+`autoDeployTrigger: commit`, yet no build ever starts on push - the GitHub webhook does not reach
+Render, and every deploy on record has `trigger: "api"`. Push, then `trigger_deploy`, then check the
+deploy's `commit.id` against what you pushed and `curl` the live URL for a string only the new build
+contains: `list_deploys` reporting `live` tells you nothing about which commit is live.
+
 The pre-publication checklist (OG tags, 1200×627 preview, Post Inspector) is `CONTRIBUTING.md` §6;
 the step-by-step is the `publish-guide` skill. Both guides are live:
 `envoy-gateway-guide.onrender.com` (OG tags, `og-preview.png`, favicon - Post Inspector not yet

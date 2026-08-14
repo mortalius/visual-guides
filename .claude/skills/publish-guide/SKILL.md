@@ -67,6 +67,14 @@ user can act while you prepare the rest:
    a local commit is invisible to it. This repo routinely carries unpushed commits, and pushing
    still requires asking. So publishing is the one workflow where a push is part of the job: raise
    it early rather than at the end.
+
+   **But the push alone does not deploy this service.** `envoy-gateway-guide` reports
+   `autoDeploy: yes` with `autoDeployTrigger: commit`, and the build still never starts - the
+   GitHub webhook does not reach Render. Every deploy so far has `trigger: "api"`. So after
+   pushing, call `trigger_deploy` and confirm the returned `commit.id` is the commit you just
+   pushed; a deploy that reports `live` against the *previous* commit is the failure this hides.
+   Verify against the live URL too (`curl` for a string that only exists in the new build) -
+   `list_deploys` showing `live` says nothing about which commit that was.
 2. **`RENDER_API_KEY` must be in the environment.** The MCP server in the root `.mcp.json` expands
    it at **session start** - so `export`ing it mid-session does nothing; the user has to set it and
    restart Claude Code. Say this explicitly, because "set the key" on its own leads to a restart
