@@ -108,6 +108,12 @@ spec:
     - name: https
       protocol: HTTPS
       port: 443
+      <span class="yk" data-f="allowedRoutes">allowedRoutes</span>:   <span class="c"># кто вправе привязаться</span>
+        namespaces:
+          from: <span class="v">Selector</span>
+          selector:
+            matchLabels:
+              kubernetes.io/metadata.name: <span class="v">team-hero</span>
       <span class="yk" data-f="tls">tls</span>:
         mode: Terminate
         certificateRefs:
@@ -117,7 +123,8 @@ spec:
         gatewayClassName:{purpose:'Привязывает Gateway к GatewayClass - так выбирается контроллер и базовый EnvoyProxy.',links:['→ GatewayClass (spec.controllerName, spec.parametersRef)'],impact:'Определяет, какой контроллер развернёт data plane и с какой инфраструктурной конфигурацией.',failure:'Имя несуществующего класса → Gateway остаётся <code>Accepted=False</code>, поды Envoy не создаются.'},
         infrastructure:{purpose:'Вторая точка привязки <code>EnvoyProxy</code>: инфраструктура именно этого Gateway, а не всего класса. Ровно то, чем разводят Gateway по своим NLB, не заводя отдельный GatewayClass под каждый.',links:['→ EnvoyProxy (kind: EnvoyProxy, тот же namespace)','↔ GatewayClass.spec.parametersRef - привязка на весь класс, приоритет ниже'],impact:'Перекрывает EnvoyProxy класса: по умолчанию заменяет его целиком, а <code>spec.mergeType</code> в EnvoyProxy (<code>StrategicMerge</code>/<code>JSONMerge</code>, с EG v1.8) сливает уровни послойно. Тип ссылки - <code>LocalParametersReference</code>, поля <code>namespace</code> у неё <b>нет</b>: отсюда требование держать Gateway и его EnvoyProxy в одном namespace.',failure:'EnvoyProxy не найден в namespace Gateway → <code>Accepted=False</code> с причиной <code>InvalidParameters</code>. То же - если на EnvoyProxy класса включён <code>mergeGateways: true</code>: тогда это поле обязано быть пустым, иначе Gateway не принят.'},
         listeners:{purpose:'Список точек прослушивания: порт, протокол, hostname, разрешённые маршруты.',links:['← HTTPRoute.parentRefs (по name листенера через sectionName)','← ClientTrafficPolicy (sectionName для конкретного листенера)'],impact:'Определяет, какие порты/протоколы открыты и какие маршруты можно привязать.',failure:'<code>allowedRoutes</code> уже, чем ожидалось → HTTPRoute не аттачится (<code>ResolvedRefs</code>/<code>Accepted=False</code>); трафик 404.'},
-        tls:{purpose:'Настройка терминации TLS на листенере: режим и ссылки на сертификаты.',links:['→ Secret (certificateRefs)'],impact:'mode: Terminate - Envoy расшифровывает TLS на входе; клиентский трафик далее идёт внутри как HTTP.',failure:'Отсутствует/просрочен Secret из <code>certificateRefs</code> → листенер :443 не программируется, TLS-handshake рвётся.'}
+        allowedRoutes:{purpose:'Кто вправе привязать маршрут к этому листенеру: из каких namespace (<code>All</code> / <code>Same</code> / <code>Selector</code>) и каких kind.',links:['← HTTPRoute.parentRefs - вторая половина рукопожатия','↔ spec.allowedListeners - тот же принцип для ListenerSet','↔ ReferenceGrant - другое рукопожатие, не это'],impact:'Привязка маршрута <b>двусторонняя</b>: маршрут называет Gateway в <code>parentRefs</code>, а Gateway разрешает его namespace здесь. Не совпало - маршрут не аттачится. По умолчанию <code>from: Same</code>, только свой namespace. Это <b>не</b> ReferenceGrant: разрешение живёт в spec самого Gateway, а не отдельным ресурсом рядом с целью. Разбор всех трёх механизмов - на слое «Границы namespace».',failure:'Селектор по произвольной метке (<code>env</code>, <code>team</code>) → любой, кто может править метки namespace, сам расширяет себе доступ к вашему Gateway. Берите <code>kubernetes.io/metadata.name</code>: её значение гарантированно равно имени namespace и не переписывается.'},
+        tls:{purpose:'Настройка терминации TLS на листенере: режим и ссылки на сертификаты.',links:['→ Secret (certificateRefs; по умолчанию - namespace самого Gateway)','→ ReferenceGrant в namespace Secret, если сертификат лежит в другом namespace'],impact:'mode: Terminate - Envoy расшифровывает TLS на входе; клиентский трафик далее идёт внутри как HTTP. У <code>certificateRefs</code>, в отличие от <code>infrastructure.parametersRef</code>, поле <code>namespace</code> <b>есть</b>: хранить wildcard-сертификат в отдельном namespace можно, но такую ссылку разрешает владелец Secret - через <code>ReferenceGrant</code> рядом с самим Secret.',failure:'Отсутствует/просрочен Secret из <code>certificateRefs</code> → листенер :443 не программируется, TLS-handshake рвётся. Secret в чужом namespace без <code>ReferenceGrant</code> → тот же результат, но причина <code>RefNotPermitted</code>: контроллер обязан вести себя так, будто Secret не существует, и по спеке не имеет права подсказать, есть он там или нет.'}
       }
     }
   },
@@ -158,7 +165,7 @@ spec:
       fields:{
         parentRef:{purpose:'Родительский Gateway, к которому прикрепляются листенеры набора. В отличие от маршрутов - <b>единственный</b> (parentRef, не parentRefs).',links:['→ Gateway (должен разрешить приём через spec.allowedListeners)'],impact:'Листенеры набора мёржатся в инфраструктуру этого Gateway; при конфликте выигрывают листенеры самого Gateway.',failure:'Gateway не разрешил namespace в <code>allowedListeners</code> (по умолчанию <code>None</code>) → набор не принят, листенеры не программируются.'},
         listeners:{purpose:'Список дополнительных листенеров (как в Gateway): порт, протокол, hostname, TLS, allowedRoutes.',links:['← HTTPRoute.parentRefs (kind: ListenerSet, по sectionName)'],impact:'Расширяет точки входа Gateway без правки его spec; имена уникальны в наборе.',failure:'Тройка (port, protocol, hostname) конфликтует с листенером Gateway или другого набора → статус <code>Conflicted</code>.'},
-        tls:{purpose:'Терминация TLS на листенере набора со своими сертификатами.',links:['→ Secret (certificateRefs)'],impact:'Команда управляет своими сертификатами независимо от владельца Gateway.',failure:'Нет/просрочен Secret → листенер :443 набора не программируется.'}
+        tls:{purpose:'Терминация TLS на листенере набора со своими сертификатами.',links:['→ Secret (certificateRefs; namespace набора)','→ ReferenceGrant, если Secret лежит в другом namespace'],impact:'Команда управляет своими сертификатами независимо от владельца Gateway - в этом половина смысла набора: сертификат лежит в namespace команды, а не в namespace Gateway.',failure:'Нет/просрочен Secret → листенер :443 набора не программируется. Для Secret из чужого namespace нужен <code>ReferenceGrant</code> рядом с Secret; правило то же, что у Gateway, но в списке поддерживаемых cross-namespace случаев Envoy Gateway явно назван только <code>Gateway</code> - на своей версии проверьте, что грант учитывается и для набора.'}
       }
     }
   },
@@ -198,7 +205,7 @@ spec:
         parentRefs:{purpose:'Привязывает маршрут к Gateway и (через sectionName) к конкретному листенеру.',links:['→ Gateway (spec.listeners[].name)'],impact:'Без совпадения по parentRef/allowedRoutes маршрут не будет принят Gateway.',failure:'Неверный <code>name</code>/<code>sectionName</code> или запрет <code>allowedRoutes</code> → маршрут не аттачится, запросы к его host отдают 404.'},
         hostnames:{purpose:'Домены, для которых действует маршрут; пересекаются с hostname листенера.',links:['× пересечение с Gateway listener hostname'],impact:'Запрос с другим Host не попадёт в этот маршрут.'},
         matches:{purpose:'Условия совпадения запроса: path, header, method, query.',links:[],impact:'Определяет, какие запросы уходят на backendRefs этого правила; на этом шаге Envoy принимает L7-решение.'},
-        backendRefs:{purpose:'Целевые backend и их веса (для canary / split).',links:['→ Service (core)','→ Backend (kind: Backend, EG CRD) для не-Service backend'],impact:'weight распределяет трафик между backend; здесь начинается upstream-путь.',failure:'Service не существует или нет endpoints → <code>ResolvedRefs=False</code>, ответ 500/503; ReferenceGrant нужен для cross-namespace.'}
+        backendRefs:{purpose:'Целевые backend и их веса (для canary / split).',links:['→ Service (core)','→ Backend (kind: Backend, EG CRD) для не-Service backend','→ ReferenceGrant в namespace backend, если backend в другом namespace'],impact:'weight распределяет трафик между backend; здесь начинается upstream-путь. Поле <code>namespace</code> у ссылки есть, но граница namespace по умолчанию закрыта: cross-namespace ссылку разрешает владелец цели через <code>ReferenceGrant</code> - подробнее на слое «Границы namespace».',failure:'Спека различает два похожих отказа: ссылка <b>невалидна</b> (нет Service, не тот kind, нет гранта) → <b>500</b>; Service есть, но <b>без готовых endpoints</b> → <b>503</b>. При весах ошибку получает ровно та доля трафика, что пришлась бы на битый backend. Cross-namespace без <code>ReferenceGrant</code> → <code>ResolvedRefs=False</code> с причиной <code>RefNotPermitted</code>, и контроллер не имеет права намекнуть, существует ли объект вообще.'}
       }
     }
   },
@@ -517,10 +524,72 @@ spec:
       fields:{
         targetRef:{purpose:'Gateway, чей сгенерированный xDS будет патчиться.',links:['→ Gateway (или GatewayClass при mergeGateways)'],impact:'Определяет, к чьей конфигурации Envoy применяются патчи.'},
         type:{purpose:'Тип патча - сейчас только JSONPatch.',links:[],impact:'Фиксирует формат операций ниже.'},
-        jsonPatches:{purpose:'Список правок к конкретным xDS-ресурсам (Listener/Route/Cluster). <code>name</code> адресует ресурс: до v1.10 по схеме <code>&lt;namespace&gt;/&lt;gateway&gt;/&lt;listener&gt;</code> (напр. <code>default/hero-gw/https</code>), с v1.10 по умолчанию v2-схема <code>&lt;protocol&gt;-&lt;port&gt;</code> (напр. <code>https-443</code>).',links:['→ сгенерированные xDS-ресурсы'],impact:'Прямое вмешательство в конфиг Envoy - мощно и рискованно, легко сломать прокси.',failure:'Неверный <code>name</code>/путь патча → xDS не проходит валидацию, статус <code>Programmed=False</code>, весь Gateway может остаться на старом конфиге.'}
+        jsonPatches:{purpose:'Список правок к конкретным xDS-ресурсам (Listener/Route/Cluster). <code>name</code> адресует ресурс: по умолчанию (и на v1.8) - схема <code>&lt;namespace&gt;/&lt;gateway&gt;/&lt;listener&gt;</code>, напр. <code>default/hero-gw/https</code>.',links:['→ сгенерированные xDS-ресурсы'],impact:'Прямое вмешательство в конфиг Envoy - мощно и рискованно, легко сломать прокси.',failure:'Неверный <code>name</code>/путь патча → xDS не проходит валидацию, статус <code>Programmed=False</code>, весь Gateway может остаться на старом конфиге. Отдельная мина - смена схемы имён: v2-схема (<code>&lt;protocol&gt;-&lt;port&gt;</code>, напр. <code>https-443</code>) доступна с v1.5 за runtime-флагом <code>XDSNameSchemeV2</code>, выключенным по умолчанию, и <b>станет дефолтом с v1.10</b> - все <code>name</code> в патчах придётся переписать до апгрейда.'}
       }
     }
   },
+
+  /* ---------------- Cross-namespace boundary (namespaces layer) ---------------- */
+  referencegrant:{
+    kind:'ReferenceGrant', badge:'Gateway API core', scope:'namespaced · в namespace цели',
+    lead:'Разрешение пересечь границу namespace. Лежит <b>в namespace того, на кого ссылаются</b>, и перечисляет, кому это разрешено: не «мне можно достать наружу», а «я разрешаю до меня достать». Без гранта cross-namespace ссылка недействительна - иначе любой, у кого есть права в своём namespace, увёл бы трафик на чужой Service или прицепил к своему листенеру чужой TLS-сертификат.',
+    fields:[
+      ['spec.from[]','Кто вправе ссылаться: <code>group</code> + <code>kind</code> + <code>namespace</code>. Имени ресурса здесь нет намеренно.'],
+      ['spec.to[]','На что можно ссылаться: <code>group</code> + <code>kind</code> (+ опц. <code>name</code>). Поля <code>namespace</code> нет - только свой.']
+    ],
+    refs:[
+      ['out','разрешает ссылаться','HTTPRoute','spec.from · backendRefs'],
+      ['out','разрешает ссылаться','Gateway','spec.from · certificateRefs'],
+      ['out','открывает доступ к','Service / Secret','spec.to · только в своём namespace']
+    ],
+    note:'Standard channel с Gateway API <b>v0.6</b> (раньше назывался <code>ReferencePolicy</code>); версия <code>v1</code> появилась в <b>v1.5</b>, при этом <code>v1beta1</code> продолжает отдаваться и остаётся storage-версией - поэтому в манифесте она. Envoy Gateway учитывает грант ровно в <b>трёх</b> случаях: <code>backendRefs</code> маршрута на Service в другом namespace, <code>backendRef</code> в фильтре <code>requestMirror</code> и <code>certificateRefs</code> листенера Gateway. Гранты только <b>складываются</b>: конфликтовать между собой они не могут, но и отозвать чужое разрешение своим грантом нельзя - убирают, удаляя нужный.',
+    manifest:{
+      yaml:`apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: allow-hero-route
+  <span class="c"># namespace ЦЕЛИ ссылки, не источника</span>
+  <span class="yk" data-f="namespace">namespace</span>: <span class="v">payments</span>
+spec:
+  <span class="yk" data-f="from">from</span>:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      namespace: <span class="v">team-hero</span>
+  <span class="yk" data-f="to">to</span>:
+    - group: ""
+      kind: Service
+      name: <span class="v">checkout</span>   <span class="c"># лучше указать</span>`,
+      fields:{
+        namespace:{purpose:'Namespace, в котором лежит грант, - это namespace <b>цели</b> ссылки (здесь Service <code>checkout</code>), а не того, кто ссылается.',links:['= namespace объекта из spec.to','≠ namespace объекта из spec.from'],impact:'Грант действует только на объекты своего namespace - отсюда и отсутствие поля <code>namespace</code> в <code>spec.to</code>. Кого впустить, решает владелец цели; владелец маршрута не может выписать разрешение сам себе, и в этом весь смысл конструкции.',failure:'Положить грант рядом с маршрутом, в namespace источника, - самая частая ошибка. Ссылка остаётся запрещённой, но сам грант при этом валиден и выглядит применённым: ничто не подсказывает, что он лежит не там.'},
+        from:{purpose:'Кто получает разрешение: группа, kind и namespace ссылающегося ресурса. Все три поля обязательны.',links:['→ Gateway, HTTPRoute, GRPCRoute, TLSRoute, TCPRoute, UDPRoute - CORE-набор источников','↔ Gateway.spec.listeners[].allowedRoutes - другое рукопожатие, не это'],impact:'Имени ресурса здесь нет намеренно: тот, у кого есть права в этом namespace, всё равно переименует ресурс под грант, так что имя ничего не защищало бы. Селектор по namespace тоже отклонён - одна запись = один namespace; больше доверенных сторон = больше записей (до 16).',failure:'Опечатка в <code>kind</code> или <code>namespace</code> → грант просто никого не разрешает. Ошибки не будет: сам по себе он валиден, и статус появится не у него, а у маршрута.'},
+        to:{purpose:'На что разрешено ссылаться: группа и kind (<code>group: ""</code> - core, то есть Service и Secret), опционально имя конкретного объекта.',links:['→ Service (core) - для backendRefs маршрута','→ Secret (core) - для certificateRefs листенера'],impact:'Без <code>name</code> грант открывает <b>все</b> объекты этого kind в namespace, включая те, что появятся завтра. Рекомендация upstream по безопасности - указывать <code>group</code>, <code>kind</code> и <code>name</code> всегда, если нет очень веской причины не указывать.',failure:'Удалили грант - разрешённые им ссылки становятся недействительными <b>задним числом</b>: реализация обязана пересчитывать их при каждом изменении, ничего не «запоминается» на момент применения. Забыли <code>name</code> - выдали доступ ко всему namespace и не заметили.'}
+      }
+    }
+  },
+  'ns-secret':{kind:'Secret', badge:'core · kubernetes.io/tls', scope:'namespaced',
+    lead:'TLS-сертификат листенера. Держать его отдельно от Gateway - обычная практика: сертификатами занимается своя команда (или cert-manager), а namespace платформы остаётся закрытым. Поле <code>namespace</code> у <code>certificateRefs</code> есть, но пересечь границу разрешает владелец Secret, а не владелец Gateway.',
+    fields:[
+      ['type','<code>kubernetes.io/tls</code>: ключи <code>tls.crt</code> и <code>tls.key</code>.'],
+      ['кто ссылается','<code>Gateway.spec.listeners[].tls.certificateRefs</code>, а также листенеры <code>ListenerSet</code>.'],
+      ['разрешение','<code>ReferenceGrant</code> в этом же namespace, <code>to.kind: Secret</code>.']
+    ],
+    refs:[
+      ['in','ссылается на','Gateway','listeners[].tls.certificateRefs'],
+      ['in','разрешает ссылку','ReferenceGrant','to.kind: Secret']
+    ],
+    note:'Перевыпуск сертификата - правка того же Secret, Gateway при этом не меняется. А вот удаление <code>ReferenceGrant</code> ломает ссылку сразу, даже когда сам Secret на месте и корректен.'},
+  'ns-service':{kind:'Service', badge:'core', scope:'namespaced',
+    lead:'Обычный k8s Service - самая частая цель <code>backendRefs</code>. Пока маршрут и Service в одном namespace, ссылка работает без каких-либо разрешений; как только они разъехались по namespace, ссылку обязан разрешить владелец Service.',
+    fields:[
+      ['ports','Порт, на который Envoy отправит запрос (<code>backendRefs[].port</code>).'],
+      ['endpoints','Готовые поды за Service - случай, отдельный от «Service не существует».'],
+      ['разрешение','<code>ReferenceGrant</code> в этом же namespace, <code>to.kind: Service</code> (лучше - с <code>name</code>).']
+    ],
+    refs:[
+      ['in','направляет в','HTTPRoute','backendRefs'],
+      ['in','разрешает ссылку','ReferenceGrant','to.kind: Service']
+    ],
+    note:'Два отказа, которые легко спутать: <b>ссылка недействительна</b> (нет Service, не тот kind, нет гранта) → <b>500</b>; <b>Service есть, готовых endpoints нет</b> → <b>503</b>. Первый виден в статусе маршрута (<code>ResolvedRefs=False</code>), второй в статусе не отражается вообще.'},
 
   /* ---------------- Traffic-layer physical nodes (no manifest) ---------------- */
   't-controller':{kind:'Controller', badge:'control plane', scope:'конфигурация, не трафик', control:true,
@@ -584,6 +653,14 @@ spec:
 PANELS['p-envoyproxy'] = PANELS.envoyproxy;
 PANELS['p-envoypatchpolicy'] = PANELS.envoypatchpolicy;
 PANELS['p-backendcrd'] = PANELS.backend;
+
+/* Namespaces-layer aliases → reuse full panels.
+   Both ReferenceGrant nodes share one panel: the resource is identical, only the
+   namespace it guards differs - and that difference is what the diagram shows. */
+PANELS['ns-gateway'] = PANELS.gateway;
+PANELS['ns-httproute'] = PANELS.httproute;
+PANELS['ns-grant-secret'] = PANELS.referencegrant;
+PANELS['ns-grant-svc'] = PANELS.referencegrant;
 
 /* ---------------- Traffic stepper model ---------------- */
 /* Cumulative traffic edge ids, in path order (client→…→backend). */

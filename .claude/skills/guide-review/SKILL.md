@@ -120,8 +120,16 @@ Check `git status --short` before committing regardless.
   ask. This is the check most worth your time and the one most often skipped.
 - Versions in the masthead eyebrow match the version claims in the content. They have contradicted
   each other before - the footer once said "не привязан к версии" while the header named two.
+- **Versions exist upstream.** Internal consistency is not enough: the eyebrow, the footer and a
+  field detail all agreed on "Envoy Gateway v1.10" for months, and no such release existed - the
+  number came from a doc sentence saying a flag *will* become the default in v1.10. Check the real
+  releases (`curl -s "https://api.github.com/repos/<org>/<repo>/releases?per_page=10" | grep
+  tag_name`) and treat "will be / starting in vX" in upstream docs as a future claim to be written
+  in future tense, never as the current version.
 - The educational disclaimer sits where people look, not only in the footer.
-- Colour legend covers every role actually used. An undocumented colour is a cipher.
+- Colour legend covers every role actually used. An undocumented colour is a cipher - and the gap
+  is easy to miss when a hue is used on one layer only (`--c-blue`/`--c-cyan` had no chip for a
+  long time while GatewayClass and EnvoyProxy were painted with them).
 
 ## 7. Report
 

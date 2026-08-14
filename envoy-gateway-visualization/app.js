@@ -3,7 +3,7 @@
    ------------------------------------------------------------
    Depends on globals from data.js: PANELS, STEPS, TRAFFIC_EDGES.
    Wires up:
-     - layer tabs (Resources / Traffic / Policies)
+     - layer tabs (Resources / Traffic / Policies / Deployment / Namespaces)
      - node selection → right-side panel (Overview / Manifest)
      - interactive YAML fields → field-detail block
      - Traffic layer stepper + progress bar
@@ -187,6 +187,7 @@ const layerPanels = {
   traffic:document.getElementById('panel-traffic'),
   policies:document.getElementById('panel-policies'),
   deploy:document.getElementById('panel-deploy'),
+  namespaces:document.getElementById('panel-namespaces'),
 };
 let currentLayer = 'crd';
 

@@ -119,7 +119,7 @@ header.masthead{padding-bottom:var(--s-lg);margin-bottom:var(--s-lg);border-bott
   display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;
 }
 /* Each component is one unbreakable unit: without this, a narrow viewport wraps
-   between the product name and its version ("ENVOY GATEWAY" / "V1.10"). */
+   between the product name and its version ("ENVOY GATEWAY" / "V1.8.3"). */
 .eb-topics > span{white-space:nowrap;}
 .eb-topics::before{                /* hairline divider, not another "·" - the segments already use them */
   content:"";width:1px;height:11px;background:var(--border-muted);flex-shrink:0;
@@ -153,6 +153,7 @@ h1{font-family:var(--display);font-size:clamp(1.4rem,2.93vw,2.27rem);font-weight
 .tab[data-layer="traffic"]{--tab-accent:var(--c-emerald);}
 .tab[data-layer="policies"]{--tab-accent:var(--c-violet);}
 .tab[data-layer="deploy"]{--tab-accent:var(--c-amber);}
+.tab[data-layer="namespaces"]{--tab-accent:var(--c-rose);}
 .tab .tab-idx{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;color:var(--text-muted);display:block;margin-bottom:6px;font-weight:500;}
 .tab .tab-title{font-family:var(--display);font-size:20px;font-weight:600;color:var(--text-primary);display:block;line-height:1.1;letter-spacing:-.01em;}
 .tab .tab-sub{font-size:12.5px;color:var(--text-secondary);display:block;margin-top:4px;}
@@ -231,6 +232,13 @@ svg.diagram{width:100%;height:auto;display:block;}
 [data-node="t-nlb"],[data-node="p-edge"],[data-node="clienttrafficpolicy"]{--na:var(--c-amber);}
 /* policies layer */
 [data-node="p-envoypatchpolicy"],[data-node="envoyextensionpolicy"]{--na:var(--c-fuchsia);}
+/* namespaces layer: same role hues as the CRDs they repeat (gateway/route/backend),
+   Secret takes the cyan "TLS-конфиг" role, ReferenceGrant the rose "доступ" one */
+[data-node="ns-gateway"]{--na:var(--c-indigo);}
+[data-node="ns-httproute"]{--na:var(--c-teal);}
+[data-node="ns-service"]{--na:var(--c-emerald);}
+[data-node="ns-secret"]{--na:var(--c-cyan);}
+[data-node="ns-grant-secret"],[data-node="ns-grant-svc"]{--na:var(--c-rose);}
 
 /* ---------- edges ---------- */
 .edge path{fill:none;stroke-linecap:round;stroke:var(--border-2);stroke-width:2;}
@@ -238,6 +246,11 @@ svg.diagram{width:100%;height:auto;display:block;}
 .edge.config path{stroke-dasharray:6 5;stroke:var(--text-3);}
 .edge.attach path{stroke:var(--primary);stroke-dasharray:4 4;}
 .edge.attach .edge-label{fill:var(--primary);}
+/* permission edge (namespaces layer, DESIGN.md §3.15): drawn AGAINST a reference edge.
+   Emerald carries "разрешено", the dash carries "не запрос" - same division of labour
+   as everywhere else here, so it can't be misread as a traffic segment. */
+.edge.grant path{stroke:var(--accent-traffic);stroke-dasharray:5 4;}
+.edge.grant .edge-label{fill:color-mix(in srgb,var(--accent-traffic) 85%,#000);}
 
 /* traffic step states */
 .stepping .node.dp,.stepping .edge.data{opacity:.6;transition:opacity 320ms var(--ease);}
@@ -260,6 +273,9 @@ svg.diagram{width:100%;height:auto;display:block;}
 .lg-line.blue{border-top-style:dashed;border-color:var(--primary);}
 .lg-line.cfg{border-top-style:dashed;border-color:var(--text-3);}
 .lg-line.owns{border-top-style:dotted;border-top-width:3px;border-color:var(--c-violet);}
+.lg-line.grant{border-top-style:dashed;border-color:var(--accent-traffic);}
+/* the namespaces layer needs an area sample, not a line one - it groups, not connects */
+.lg-box{width:26px;height:15px;border:1.5px dashed var(--border-2);border-radius:4px;background:var(--bg-surface-2);flex-shrink:0;}
 .legend code{font-family:var(--mono);font-size:11px;background:var(--accent-manifest-weak);color:var(--primary);padding:1px 4px;border-radius:4px;}
 /* a .callout (DESIGN.md §3.12) may also sit under a diagram, not only in the side panel:
    for a remark that qualifies the whole schema rather than one node. Needs the gap the
@@ -336,7 +352,10 @@ svg.diagram{width:100%;height:auto;display:block;}
 .ref-meta code{font-family:var(--mono);font-size:11px;background:var(--accent-manifest-weak);color:var(--primary);padding:1px 5px;border-radius:4px;border:1px solid color-mix(in srgb,var(--primary) 18%,transparent);}
 .callout{background:var(--accent-warning-weak);border:1px solid color-mix(in srgb,var(--accent-warning) 30%,transparent);border-left:3px solid var(--accent-warning);border-radius:var(--radius);padding:12px 15px;font-size:13px;color:var(--accent-warning);line-height:1.55;}
 .callout b{font-weight:600;color:#92400e;}
-.callout code{background:#fff;color:var(--accent-warning);border-color:color-mix(in srgb,var(--accent-warning) 28%,transparent);}
+/* long field paths (Gateway.spec.infrastructure.parametersRef) must be allowed to break:
+   .board is overflow:hidden, so an unbreakable chip is silently CUT on narrow screens
+   rather than wrapping or scrolling - the text just ends mid-word and looks correct. */
+.callout code{background:#fff;color:var(--accent-warning);border-color:color-mix(in srgb,var(--accent-warning) 28%,transparent);overflow-wrap:anywhere;}
 
 /* manifest pane - dark navy block for punchy contrast */
 .manifest-pre{font-family:var(--mono);font-size:12.5px;line-height:1.75;background:#111830;color:#c3cde4;border:1px solid #26304f;border-left:3px solid var(--primary);border-radius:var(--radius);padding:15px 17px;overflow-x:auto;margin:0 0 var(--s-md);white-space:pre;tab-size:2;font-variant-numeric:tabular-nums;box-shadow:inset 0 1px 0 rgba(255,255,255,.03),var(--shadow-sm);}
@@ -393,6 +412,8 @@ footer.foot{margin-top:var(--s-xl);padding-top:var(--s-md);border-top:1px solid 
 .ck.edge-in{--ck:var(--c-amber);}
 .ck.client{--ck:var(--c-rose);}
 .ck.policy{--ck:var(--c-fuchsia);}
+.ck.class{--ck:var(--c-blue);}
+.ck.infra{--ck:var(--c-cyan);}
 /* color legend is about SVG node hues - irrelevant on the deploy layer */
 .wrap[data-layer="deploy"] .color-key{display:none;}
 
@@ -637,6 +658,41 @@ svg.diagram.cp-shown .cp-band{opacity:1;pointer-events:auto;}
 .mig-k{grid-area:k;font-family:var(--mono);font-size:11.5px;color:var(--text-muted);}
 .mig-v{grid-area:v;font-family:var(--mono);font-size:11.5px;font-weight:700;color:var(--primary);text-align:right;}
 .mig-note{grid-area:n;font-size:11.5px;color:var(--text-secondary);line-height:1.4;}
+
+/* =====================================================================
+   Namespaces layer (tab 05): namespace boundaries + the three handshakes
+   ===================================================================== */
+
+/* ---------- namespace frame (DESIGN.md §3.14) ---------- */
+/* A grouping area, not a node: no hue, no hover, not clickable. Dashed because the
+   boundary is administrative, not a path - same reading as everywhere else here. */
+.ns-frame rect{fill:var(--bg-inset);stroke:var(--border-2);stroke-width:1.5;stroke-dasharray:7 5;}
+/* halo as a safety net: edges are drawn over the frames, and a future edge routed
+   across this label would otherwise strike the text through */
+.ns-label{font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:.06em;fill:var(--text-muted);paint-order:stroke;stroke:var(--bg-inset);stroke-width:4;stroke-linejoin:round;}
+
+/* ---------- three-handshake comparison strip (DESIGN.md §3.16) ---------- */
+.hs{margin-top:var(--s-md);background:var(--bg-surface-2);border:1px solid var(--border-faint);border-radius:var(--radius);padding:var(--s-md);}
+.hs-head{display:flex;align-items:baseline;justify-content:space-between;gap:var(--s-sm);flex-wrap:wrap;margin-bottom:var(--s-sm);}
+.hs-title{font-family:var(--display);font-size:20px;font-weight:600;color:var(--text-primary);}
+.hs-sub{font-family:var(--mono);font-size:11px;color:var(--text-muted);}
+.hs-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s-sm);}
+@media (max-width:860px){.hs-grid{grid-template-columns:1fr;}}
+.hs-card{--g:var(--primary);background:var(--bg-surface);border:1px solid var(--border-muted);border-top:3px solid var(--g);border-radius:var(--radius);padding:11px 14px 13px;box-shadow:var(--shadow-sm);min-width:0;}
+/* the object-reference card carries the same hue as the ReferenceGrant nodes above it */
+.hs-card.obj{--g:var(--c-rose);}
+.hs-card.route{--g:var(--c-indigo);}
+.hs-card.lset{--g:var(--c-teal);}
+.hs-kind{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);font-weight:700;}
+.hs-card>b{display:block;font-family:var(--mono);font-size:12.5px;font-weight:700;margin-top:3px;color:color-mix(in srgb,var(--g) 82%,#000);overflow-wrap:anywhere;}
+.hs-card ul{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:7px;}
+.hs-card li{font-size:12.5px;line-height:1.45;color:var(--text-secondary);}
+.hs-card li b{color:var(--text-primary);font-weight:600;}
+.hs-k{display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);font-weight:700;}
+.hs-card code{font-family:var(--mono);font-size:11px;background:var(--accent-manifest-weak);color:var(--primary);padding:1px 4px;border-radius:4px;overflow-wrap:anywhere;}
+.hs-note{margin:var(--s-sm) 0 0;font-size:12px;color:var(--text-muted);line-height:1.55;}
+.hs-note b{color:var(--text-primary);font-weight:600;}
+.hs-note code{font-family:var(--mono);font-size:11.5px;background:var(--accent-manifest-weak);color:var(--primary);padding:1px 5px;border-radius:4px;}
 
 /* deployment layer - narrow screens (must follow base rules to win on source order) */
 @media (max-width:640px){

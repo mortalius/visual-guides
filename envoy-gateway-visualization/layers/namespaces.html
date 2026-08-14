@@ -1,0 +1,157 @@
+      <div class="layer-panel" id="panel-namespaces" role="tabpanel">
+        <div class="board-head">
+          <h2>Границы namespace: кто кому разрешает</h2>
+          <span class="hint">Серая стрелка = ссылка, зелёная навстречу = разрешение</span>
+        </div>
+        <div class="diagram-scroll">
+        <svg class="diagram" viewBox="0 0 1040 530" role="img" aria-label="Схема пересечения границ namespace: ссылки между Gateway, HTTPRoute, Secret и Service и разрешающие их ReferenceGrant">
+          <defs>
+            <marker id="ar-ns" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0.5,0.5 L9,5 L0.5,9.5" fill="none" stroke="var(--border-2)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+            <!-- permission arrows are emerald: colour says "разрешено", dash says "не запрос" -->
+            <marker id="ar-gr" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0.5,0.5 L9,5 L0.5,9.5" fill="none" stroke="var(--accent-traffic)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+          </defs>
+
+          <!-- namespace frames (DESIGN.md §3.14). Drawn FIRST so reference edges cross
+               visibly over their borders - that crossing is the subject of this layer. -->
+          <g class="ns-frame"><rect x="25" y="44" width="420" height="150" rx="12"/><text class="ns-label" x="45" y="70">namespace: infra</text></g>
+          <g class="ns-frame"><rect x="595" y="44" width="420" height="150" rx="12"/><text class="ns-label" x="615" y="70">namespace: team-hero</text></g>
+          <!-- bottom-row labels sit at the BOTTOM of their frame: the reference edges come down
+               into these frames from above, and a top-left label is exactly where they land -
+               the arrow struck the text through. All four labels now hug the outer edge. -->
+          <g class="ns-frame"><rect x="25" y="330" width="420" height="180" rx="12"/><text class="ns-label" x="45" y="498">namespace: certs</text></g>
+          <g class="ns-frame"><rect x="595" y="330" width="420" height="180" rx="12"/><text class="ns-label" x="615" y="498">namespace: payments</text></g>
+
+          <!-- ===== crossing 1: route attachment. Handshake lives in the Gateway's OWN spec,
+                   so both halves are plain fields - no third resource involved. ===== -->
+          <g class="edge"><path d="M625,116 L423,116" marker-end="url(#ar-ns)"/><text class="edge-label" x="524" y="106" text-anchor="middle">parentRefs</text></g>
+          <g class="edge grant"><path d="M415,148 L617,148" marker-end="url(#ar-gr)"/><text class="edge-label" x="516" y="167" text-anchor="middle">allowedRoutes</text></g>
+
+          <!-- ===== crossing 2: Gateway → Secret, permitted by a grant next to the Secret ===== -->
+          <g class="edge"><path d="M137,170 C137,240 139,300 139,366" marker-end="url(#ar-ns)"/><text class="edge-label" x="152" y="264" text-anchor="start">certificateRefs</text></g>
+          <g class="edge grant"><path d="M330,370 C330,300 330,240 330,176" marker-end="url(#ar-gr)"/><text class="edge-label" x="344" y="264" text-anchor="start">spec.from</text></g>
+
+          <!-- ===== crossing 3: HTTPRoute → Service, permitted by a grant next to the Service ===== -->
+          <g class="edge"><path d="M707,174 C707,240 707,300 707,366" marker-end="url(#ar-ns)"/><text class="edge-label" x="695" y="264" text-anchor="end">backendRefs</text></g>
+          <g class="edge grant"><path d="M900,370 C900,300 900,240 900,176" marker-end="url(#ar-gr)"/><text class="edge-label" x="914" y="264" text-anchor="start">spec.from</text></g>
+
+          <!-- nodes -->
+          <g class="node" data-node="ns-gateway" tabindex="0" role="button" aria-label="Gateway hero-gw в namespace infra">
+            <rect class="glow-ring" x="52" y="81" width="366" height="92" rx="10"/>
+            <rect class="node-box" x="55" y="84" width="360" height="86" rx="8"/>
+            <text class="node-kind" x="80" y="112">GATEWAY</text>
+            <text class="node-title" x="80" y="138">hero-gw</text>
+            <text class="node-sub" x="80" y="157">listeners :443 · владелец - платформа</text>
+          </g>
+          <g class="node" data-node="ns-httproute" tabindex="0" role="button" aria-label="HTTPRoute hero-route в namespace team-hero">
+            <rect class="glow-ring" x="622" y="81" width="366" height="92" rx="10"/>
+            <rect class="node-box" x="625" y="84" width="360" height="86" rx="8"/>
+            <text class="node-kind" x="650" y="112">HTTPROUTE</text>
+            <text class="node-title" x="650" y="138">hero-route</text>
+            <text class="node-sub" x="650" y="157">владелец - команда продукта</text>
+          </g>
+
+          <g class="node" data-node="ns-secret" tabindex="0" role="button" aria-label="Secret wildcard-tls в namespace certs">
+            <rect class="glow-ring" x="47" y="371" width="181" height="106" rx="10"/>
+            <rect class="node-box" x="50" y="374" width="175" height="100" rx="8"/>
+            <text class="node-kind" x="72" y="402">SECRET</text>
+            <text class="node-title" x="72" y="430">wildcard-tls</text>
+            <text class="node-sub" x="72" y="450">kubernetes.io/tls</text>
+          </g>
+          <g class="node" data-node="ns-grant-secret" tabindex="0" role="button" aria-label="ReferenceGrant allow-hero-gw в namespace certs">
+            <rect class="glow-ring" x="237" y="371" width="186" height="106" rx="10"/>
+            <rect class="node-box" x="240" y="374" width="180" height="100" rx="8"/>
+            <text class="node-kind" x="262" y="402">REFERENCEGRANT</text>
+            <text class="node-title" x="262" y="430">allow-hero-gw</text>
+            <text class="node-sub" x="262" y="450">to: Secret</text>
+          </g>
+
+          <g class="node" data-node="ns-service" tabindex="0" role="button" aria-label="Service checkout в namespace payments">
+            <rect class="glow-ring" x="617" y="371" width="181" height="106" rx="10"/>
+            <rect class="node-box" x="620" y="374" width="175" height="100" rx="8"/>
+            <text class="node-kind" x="642" y="402">SERVICE</text>
+            <text class="node-title" x="642" y="430">checkout</text>
+            <text class="node-sub" x="642" y="450">ClusterIP :8080</text>
+          </g>
+          <g class="node" data-node="ns-grant-svc" tabindex="0" role="button" aria-label="ReferenceGrant allow-hero-route в namespace payments">
+            <rect class="glow-ring" x="807" y="371" width="186" height="106" rx="10"/>
+            <rect class="node-box" x="810" y="374" width="180" height="100" rx="8"/>
+            <text class="node-kind" x="832" y="402">REFERENCEGRANT</text>
+            <text class="node-title" x="832" y="430">allow-hero-route</text>
+            <text class="node-sub" x="832" y="450">to: Service</text>
+          </g>
+        </svg>
+        </div>
+
+        <!-- Three handshakes side by side (DESIGN.md §3.16). The whole point of the layer:
+             ReferenceGrant is one of three, and the reader must not merge them into one rule. -->
+        <div class="hs">
+          <div class="hs-head">
+            <span class="hs-title">Три рукопожатия, не одно</span>
+            <span class="hs-sub">каждое пересечение границы разрешается своим механизмом</span>
+          </div>
+          <div class="hs-grid">
+            <div class="hs-card obj">
+              <span class="hs-kind">ссылка на объект</span>
+              <b>ReferenceGrant</b>
+              <ul>
+                <li><span class="hs-k">кто разрешает</span>владелец <b>цели</b> ссылки</li>
+                <li><span class="hs-k">где живёт</span>отдельный ресурс, в namespace цели</li>
+                <li><span class="hs-k">что покрывает</span><code>backendRefs</code>, <code>requestMirror</code>, <code>certificateRefs</code></li>
+                <li><span class="hs-k">по умолчанию</span>запрещено</li>
+              </ul>
+            </div>
+            <div class="hs-card route">
+              <span class="hs-kind">привязка маршрута</span>
+              <b>allowedRoutes.namespaces</b>
+              <ul>
+                <li><span class="hs-k">кто разрешает</span>владелец <b>Gateway</b></li>
+                <li><span class="hs-k">где живёт</span>поле в spec самого Gateway, на листенер</li>
+                <li><span class="hs-k">что покрывает</span><code>parentRefs</code> маршрута</li>
+                <li><span class="hs-k">по умолчанию</span><code>Same</code> - только свой namespace</li>
+              </ul>
+            </div>
+            <div class="hs-card lset">
+              <span class="hs-kind">привязка листенеров</span>
+              <b>allowedListeners</b>
+              <ul>
+                <li><span class="hs-k">кто разрешает</span>владелец <b>Gateway</b></li>
+                <li><span class="hs-k">где живёт</span>поле в spec самого Gateway</li>
+                <li><span class="hs-k">что покрывает</span><code>parentRef</code> у <code>ListenerSet</code></li>
+                <li><span class="hs-k">по умолчанию</span><code>None</code> - запрещено</li>
+              </ul>
+            </div>
+          </div>
+          <p class="hs-note"><b>Разрешения независимы, и отказ выглядит по-разному.</b>
+            <code>allowedRoutes</code> разрешает <i>привязать маршрут</i> к листенеру - не совпало, и маршрут
+            просто не аттачится: запросы к его домену отдают <b>404</b>, потому что для Envoy этого маршрута
+            нет. <code>ReferenceGrant</code> разрешает <i>сослаться на объект</i> - маршрут при этом может быть
+            принят Gateway и всё равно отдавать <b>500</b>, потому что его <code>backendRefs</code> смотрит в
+            чужой namespace без гранта. Первый случай виден в статусе Gateway, второй - в статусе маршрута
+            (<code>ResolvedRefs=False</code>, причина <code>RefNotPermitted</code>).</p>
+        </div>
+
+        <div class="legend">
+          <span class="lg"><span class="lg-box"></span> граница namespace</span>
+          <span class="lg"><span class="lg-line"></span> ссылка через поле spec (<code>*Ref</code>) - пересекает границу</span>
+          <span class="lg"><span class="lg-line grant"></span> разрешение пересечь границу (навстречу ссылке)</span>
+        </div>
+        <!-- schema-level remark (DESIGN.md §3.13): the negative space. Belongs to the whole
+             picture, not to one node - every one of these limits is a border the diagram
+             does NOT draw, because no mechanism exists to open it. -->
+        <div class="callout">
+          <b>Грант - не универсальный ключ.</b> Он разрешает только ссылки, и только те, что реализация
+          умеет проверять: Envoy Gateway учитывает его в трёх случаях - <code>backendRefs</code> маршрута
+          на <code>Service</code>, <code>backendRef</code> в фильтре <code>requestMirror</code> и
+          <code>certificateRefs</code> листенера <code>Gateway</code>. Остальные границы закрыты жёстко,
+          механизма разрешения там нет вовсе: политики EG (<code>SecurityPolicy</code>,
+          <code>ClientTrafficPolicy</code>, <code>BackendTrafficPolicy</code>,
+          <code>EnvoyExtensionPolicy</code>) целятся только в свой namespace,
+          <code>BackendTLSPolicy</code> не принимает сертификаты из чужого, а у
+          <code>Gateway.spec.infrastructure.parametersRef</code> поля <code>namespace</code> нет
+          физически - см. слой «Ресурсы».
+        </div>
+      </div>

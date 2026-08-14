@@ -138,6 +138,11 @@ rediscovered the hard way, and the next agent has no memory of this session.
   before swapping a family.
 - **Clarity limit of ≤7–9 elements** in view per diagram. Exceeding it means the cross-section
   should be split, not shrunk.
+- **HTML text does not overflow visibly either - it gets cut.** `.board` is `overflow:hidden`, so a
+  long unbreakable inline chip (`<code>Gateway.spec.infrastructure.parametersRef</code>`) is
+  silently truncated on a narrow viewport: no scrollbar, no reflow, the text just ends mid-word and
+  looks deliberate. Inline code in prose blocks needs `overflow-wrap:anywhere`. Same failure mode as
+  the SVG trap above, different mechanism - and `docScrollX === 0` does **not** clear it.
 - **Console must be clean.** `favicon.ico 404` was the tolerated exception;
   `envoy-gateway-visualization` now ships a favicon, so its bar is zero errors. tempo still 404s.
 - **The data globals are `const`, so they are not on `window`.** Reaching them from an injected

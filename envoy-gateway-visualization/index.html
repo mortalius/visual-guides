@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Envoy Gateway и Gateway API - интерактивный гайд</title>
-<meta name="description" content="Интерактивный разбор Gateway API и Envoy Gateway: как связаны CRD, каким путём идёт трафик, где применяется каждая политика и как выбрать режим развёртывания.">
+<meta name="description" content="Интерактивный разбор Gateway API и Envoy Gateway: как связаны CRD, каким путём идёт трафик, где применяется каждая политика, как выбрать режим развёртывания и где проходят границы namespace.">
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="icon" href="favicon.png" type="image/png">
 
@@ -17,7 +17,7 @@
 <meta property="og:locale" content="ru_RU">
 <meta property="og:url" content="https://envoy-gateway-guide.onrender.com/">
 <meta property="og:title" content="Envoy Gateway и Gateway API - интерактивный гайд">
-<meta property="og:description" content="Как связаны CRD, каким путём идёт трафик, где применяется каждая политика и как выбрать режим развёртывания. Клик по узлу раскрывает назначение, связи и живой пример манифеста.">
+<meta property="og:description" content="Как связаны CRD, каким путём идёт трафик, где применяется каждая политика, как выбрать режим развёртывания и кто кому разрешает ссылаться через границу namespace. Клик по узлу раскрывает назначение, связи и живой пример манифеста.">
 <meta property="og:image" content="https://envoy-gateway-guide.onrender.com/og-preview.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="627">
@@ -27,7 +27,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=28">
+<link rel="stylesheet" href="styles.css?v=29">
 </head>
 <body>
 <div class="wrap">
@@ -39,14 +39,14 @@
     <div class="eyebrow">
       <span class="eb-rubric">Reference · Kubernetes networking</span>
       <span class="eb-topics">
-        <span>Gateway API v1.5</span> · <span>Envoy Gateway v1.10</span>
+        <span>Gateway API v1.5</span> · <span>Envoy Gateway v1.8.3</span>
       </span>
     </div>
     <h1>Envoy Gateway и Gateway API</h1>
     <p class="subtitle">интерактивный гайд для инженеров</p>
     <p class="lede">Визуальный разбор: как связаны CRD, каким путём идёт трафик,
-      где применяются политики и как выбрать режим развёртывания. Кликайте узлы - раскрываются
-      назначение, связи и живой пример манифеста.</p>
+      где применяются политики, как выбрать режим развёртывания и где проходят границы
+      namespace. Кликайте узлы - раскрываются назначение, связи и живой пример манифеста.</p>
   </header>
 
   <div class="tabs" role="tablist" aria-label="Слои визуализации">
@@ -70,15 +70,22 @@
       <span class="tab-title">Развёртывание</span>
       <span class="tab-sub">режимы + миграция с Ingress</span>
     </button>
+    <button class="tab" role="tab" data-layer="namespaces" aria-selected="false">
+      <span class="tab-idx">05 / NAMESPACES</span>
+      <span class="tab-title">Границы namespace</span>
+      <span class="tab-sub">кто кому разрешает ссылаться</span>
+    </button>
   </div>
 
   <div class="color-key" aria-label="Легенда цветов ресурсов">
     <span class="ck-title">Цвет = роль ресурса</span>
-    <span class="ck client">Клиент</span>
+    <span class="ck client">Клиент · доступ / security</span>
     <span class="ck edge-in">Точка входа · NLB / listener</span>
+    <span class="ck class">Класс / шаблон</span>
     <span class="ck gateway">Gateway / приём запроса</span>
     <span class="ck route">Route / маршрут / upstream</span>
     <span class="ck backend">Backend / сервис</span>
+    <span class="ck infra">Инфраструктура прокси / TLS</span>
     <span class="ck policy">Политики-расширения</span>
     <span class="ck control">Control plane / конфигурация</span>
   </div>
@@ -120,7 +127,7 @@
   <footer class="foot">
     <!-- Versions are now stated in the masthead eyebrow, so the old "не привязан к версии"
          disclaimer would contradict it. Keep this line and the eyebrow in sync. -->
-    <span>Образовательный референс · сверено с Gateway API v1.5 / Envoy Gateway v1.10
+    <span>Образовательный референс · сверено с Gateway API v1.5 / Envoy Gateway v1.8.3
       · <time datetime="2026-08">август 2026</time></span>
     <span class="foot-author">Автор ·
       <a href="https://t.me/mmmmort" target="_blank" rel="noopener noreferrer">Telegram</a> ·
@@ -136,11 +143,11 @@
      load-time wiring (.node handlers, stepper, cp-toggle, deep-link) finds a
      complete document and needs no async awareness. Requires an http server
      (fetch is blocked on file://) - see README.md. Bump ?v=N on asset edits. -->
-<script src="data.js?v=28"></script>
+<script src="data.js?v=29"></script>
 <script>
 (async () => {
-  const V = 28;                                    // cache-bust version (keep in sync with ?v= above)
-  const LAYERS = ['crd','traffic','policies','deploy'];   // injection order = tab order
+  const V = 29;                                    // cache-bust version (keep in sync with ?v= above)
+  const LAYERS = ['crd','traffic','policies','deploy','namespaces'];   // injection order = tab order
   const board = document.getElementById('board');
   try {
     const parts = await Promise.all(
