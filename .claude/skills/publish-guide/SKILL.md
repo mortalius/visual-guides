@@ -73,6 +73,11 @@ user can act while you prepare the rest:
    GitHub webhook does not reach Render. Every deploy so far has `trigger: "api"`. So after
    pushing, call `trigger_deploy` and confirm the returned `commit.id` is the commit you just
    pushed; a deploy that reports `live` against the *previous* commit is the failure this hides.
+
+   **A blueprint sync is the exception: it deploys on its own.** Creating or syncing the blueprint
+   instance in the dashboard produced a deploy with `trigger: "blueprint_sync"` that went live
+   against the just-pushed commit without any `trigger_deploy`. So for a *new* guide the order is
+   push → dashboard sync → verify; `trigger_deploy` is for later edits to an existing service.
    Verify against the live URL too (`curl` for a string that only exists in the new build) -
    `list_deploys` showing `live` says nothing about which commit that was.
 2. **`RENDER_API_KEY` must be in the environment.** The MCP server in the root `.mcp.json` expands
@@ -112,6 +117,24 @@ entire wildcard domain, and nothing holds a subdomain until the service exists.
 After the first deploy, fetch the live URL and verify: the page renders (not a 404 from a wrong
 `staticPublishPath`), assets load over https, and the OG tags in the served HTML carry the real
 host - not a placeholder.
+
+**Give a brand-new site a few minutes before you probe it, and probe it without query strings.**
+A freshly created static site propagates across the CDN for several minutes, and during that window
+a request lands on an edge that does not have the site yet. Two consequences, both of which look
+exactly like a broken deploy:
+
+- The 404 is **per cache key**, so `/app.js` can answer 200 while `/app.js?v=6` answers 404 in the
+  same second - and the guide fetches precisely the versioned form. `x-render-routing: no-server`
+  with `cf-cache-status: BYPASS` on the 404 is the signature; the build log says
+  «Your site is live 🎉» and the deploy reports the right commit, because nothing is wrong with it.
+- **Every key you touch during the window can be poisoned for minutes**, including keys the guide
+  does not use yet. Probing `?v=7` to test a theory is how a *future* version gets poisoned:
+  bumping the cache-bust afterwards would move the guide onto exactly the broken keys.
+
+So: wait, re-check the same paths, and only then conclude. Do **not** bump `?v=N` to work around it
+and do not redeploy - both create new keys and neither fixes the old ones. The single reliable
+verdict is the live page in a browser with `?selftest=1`: if all layers render and the banner is
+green, the site is fine regardless of what a `curl` loop said a minute earlier.
 
 ## 5. LinkedIn warm-up
 

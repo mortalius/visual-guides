@@ -6,8 +6,7 @@
 **точность не выбирают, её выводят из бизнес-вопроса** - система собирается справа налево,
 от события к радио.
 
-Опубликован: https://rtls-guide.onrender.com (сервис в блюпринте; см. `TODO.md`, если строка
-ещё не отвечает)  ·  Запуск: `cd rtls-indoor-positioning && python3 -m http.server` →
+Опубликован: https://rtls-guide.onrender.com  ·  Запуск: `cd rtls-indoor-positioning && python3 -m http.server` →
 http://localhost:8000
 
 **http-сервер обязателен.** Слои подгружаются через `fetch` из `layers/*.html`, а CORS
