@@ -1,0 +1,205 @@
+      <!-- Entry layer. Carries content, not only orientation: the anatomy diagram lives
+           here, because a reader who cannot name the five parts has nothing to hang the
+           other four layers on. Prose follows pattern A of WRITING.md - definition first,
+           the counter-intuitive part second, how to read the guide third. -->
+      <div class="layer-panel active" id="panel-intro" role="tabpanel">
+        <div class="board-head">
+          <h2>Что это и из чего состоит</h2>
+          <span class="hint">пять частей, которые есть в любой системе</span>
+        </div>
+
+        <div class="board-lede">
+          <p><b>RTLS</b> (real-time locating system) - система, которая отвечает на вопрос
+            «где сейчас находится этот предмет или человек» внутри здания и <b>продолжает
+            отвечать, пока объект движется</b>. Слово «real-time» здесь означает не
+            «мгновенно», а «достаточно быстро для того решения, которое на этом ответе
+            принимают»: для поиска паллеты достаточно раза в минуту, для предупреждения
+            водителя погрузчика - десятков миллисекунд. Между
+            <span class="term" data-term="fix">фиксациями</span> система не знает, где объект,
+            и показывает его в последней известной точке.</p>
+          <p>Первое, что стоит выкинуть из головы: <b>это не GPS внутри помещения</b>.
+            Спутниковый сигнал сквозь бетон не проходит - но важнее другое. В спутниковой
+            навигации приёмник слушает спутники и считает свои координаты <b>сам</b>; в
+            большинстве RTLS всё наоборот: <span class="term" data-term="tag">метка</span> только
+            выходит в эфир, а позицию за неё вычисляет инфраструктура. Из этой перевёрнутости следуют все остальные свойства:
+            метка может быть дешёвой и глупой, зато система знает, где все объекты
+            одновременно - и по той же причине она знает, где ходил человек с бейджем.</p>
+          <p>Читать гайд стоит с одной мыслью:
+            <b>точность не выбирают, её выводят из вопроса</b>. Система собирается справа
+            налево - от события, которое должно сработать, к нужной точности, оттуда к
+            методу измерения и только в самом конце к радио. Слой «Кейсы» проходит эту
+            цепочку шесть раз на живых задачах; здесь - словарь и анатомия.</p>
+          <div class="callout"><b>Материал образовательный.</b> Никаких поставщиков и моделей
+            железа: только классы технологий и открытые стандарты. Все числа в расчётах -
+            порядок величины для понимания механики, а не прогноз для вашего объекта.</div>
+        </div>
+
+        <div class="diagram-scroll">
+        <svg class="diagram" viewBox="0 0 1040 340" role="img" aria-label="Анатомия RTLS: метка, анкеры, синхронизация, движок расчёта, потребитель">
+          <defs>
+            <marker id="ar" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0.5,0.5 L9,5 L0.5,9.5" fill="none" stroke="var(--border-2)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+            <marker id="ar-cfg" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0.5,0.5 L9,5 L0.5,9.5" fill="none" stroke="var(--text-3)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+          </defs>
+
+          <!-- edges. Labels are lifted above the node rows where the gap is narrower than
+               the label: SVG does not wrap text, and the halo (paint-order:stroke) only
+               rescues a small overlap. -->
+          <g class="edge"><path d="M202,168 C232,168 242,152 272,152" marker-end="url(#ar)"/><text class="edge-label" x="237" y="86" text-anchor="middle">пакет в эфир</text></g>
+          <g class="edge"><path d="M468,152 C508,152 520,164 560,164" marker-end="url(#ar)"/><text class="edge-label" x="514" y="76" text-anchor="middle">время · угол · RSSI</text></g>
+          <g class="edge"><path d="M756,164 C790,164 806,164 840,164" marker-end="url(#ar)"/><text class="edge-label" x="798" y="150" text-anchor="middle">MQTT · REST</text></g>
+          <g class="edge config"><path d="M370,252 C370,232 370,224 370,208" marker-end="url(#ar-cfg)"/><text class="edge-label" x="386" y="236" text-anchor="start">общие часы</text></g>
+
+          <!-- nodes. data-role carries the hue (role), data-node carries identity (PANELS). -->
+          <g class="node" data-node="tag" data-role="tag" tabindex="0" role="button" aria-label="Метка">
+            <rect class="glow-ring" x="9" y="117" width="196" height="102" rx="10"/>
+            <rect class="node-box" x="12" y="120" width="190" height="96" rx="8"/>
+            <text class="node-kind" x="32" y="150">TAG</text>
+            <text class="node-title" x="32" y="176">Метка</text>
+            <text class="node-sub" x="32" y="198">на объекте поиска</text>
+          </g>
+          <g class="node" data-node="anchor" data-role="anchor" tabindex="0" role="button" aria-label="Анкеры">
+            <rect class="glow-ring" x="269" y="93" width="202" height="118" rx="10"/>
+            <rect class="node-box" x="272" y="96" width="196" height="112" rx="8"/>
+            <text class="node-kind" x="292" y="126">ANCHOR</text>
+            <text class="node-title" x="292" y="152">Анкеры</text>
+            <text class="node-sub" x="292" y="174">известные координаты</text>
+            <rect class="pod" x="292" y="182" width="30" height="15" rx="4"/>
+            <rect class="pod" x="330" y="182" width="30" height="15" rx="4"/>
+            <rect class="pod" x="368" y="182" width="30" height="15" rx="4"/>
+          </g>
+          <g class="node control" data-node="sync" data-role="sync" tabindex="0" role="button" aria-label="Синхронизация">
+            <rect class="glow-ring" x="269" y="249" width="202" height="78" rx="10"/>
+            <rect class="node-box" x="272" y="252" width="196" height="72" rx="8"/>
+            <text class="node-kind" x="292" y="280">SYNC</text>
+            <text class="node-title" x="292" y="304">Синхронизация</text>
+          </g>
+          <g class="node" data-node="engine" data-role="engine" tabindex="0" role="button" aria-label="Движок расчёта">
+            <rect class="glow-ring" x="557" y="109" width="202" height="110" rx="10"/>
+            <rect class="node-box" x="560" y="112" width="196" height="104" rx="8"/>
+            <text class="node-kind" x="580" y="142">ENGINE</text>
+            <text class="node-title" x="580" y="168">Движок расчёта</text>
+            <text class="node-sub" x="580" y="190">измерения → позиция</text>
+          </g>
+          <g class="node" data-node="consumer" data-role="consumer" tabindex="0" role="button" aria-label="Потребитель">
+            <rect class="glow-ring" x="837" y="109" width="196" height="110" rx="10"/>
+            <rect class="node-box" x="840" y="112" width="190" height="104" rx="8"/>
+            <text class="node-kind" x="858" y="142">CONSUMER</text>
+            <text class="node-title" x="858" y="168">Потребитель</text>
+            <text class="node-sub" x="858" y="190">WMS · MES · тревога</text>
+          </g>
+        </svg>
+        </div>
+
+        <div class="legend">
+          <span class="lg"><span class="lg-line"></span>измерение или результат - основной поток</span>
+          <span class="lg"><span class="lg-line cfg"></span>служебный поток: часы, конфигурация - не данные о позиции</span>
+          <span class="lg"><span class="lg-box"></span>пунктирная рамка - часть, которой нет в прайс-листе</span>
+        </div>
+        <div class="callout"><b>Цепочка читается слева направо, а проектируется справа налево.</b>
+          Кликните <b>Потребитель</b>: там сказано, почему проект начинается с события в чужой
+          системе, а не с выбора радио.</div>
+
+        <!-- Who computes the position. Pattern B of WRITING.md (знакомое → новое): the
+             reader knows satellite navigation, so the strongest move is to show what is
+             inverted rather than to explain RTLS from scratch. -->
+        <div class="hs">
+          <div class="hs-head">
+            <span class="hs-title">Кто считает позицию</span>
+            <span class="hs-sub">одно различие, из которого следует почти всё остальное</span>
+          </div>
+          <div class="hs-grid">
+            <div class="hs-card role-gnss">
+              <span class="hs-kind">спутниковая навигация</span>
+              <b>считает приёмник</b>
+              <ul>
+                <li><span class="hs-k">кто слушает</span>устройство слушает спутники</li>
+                <li><span class="hs-k">где позиция</span>остаётся на устройстве; сеть о ней не знает</li>
+                <li><span class="hs-k">внутри здания</span>не работает: сигнал не проходит сквозь конструкции</li>
+              </ul>
+            </div>
+            <div class="hs-card role-uplink">
+              <span class="hs-kind">RTLS, восходящий поток</span>
+              <b>считает инфраструктура</b>
+              <ul>
+                <li><span class="hs-k">кто слушает</span><span class="term" data-term="anchor">анкеры</span> слушают метку</li>
+                <li><span class="hs-k">где позиция</span>в <span class="term" data-term="engine">движке расчёта</span>: система видит все объекты сразу</li>
+                <li><span class="hs-k">следствие</span>метка дешёвая и «глупая» - и она же не решает, кто её видит</li>
+              </ul>
+            </div>
+            <div class="hs-card role-downlink">
+              <span class="hs-kind">RTLS, нисходящий поток</span>
+              <b>считает мобильная сторона</b>
+              <ul>
+                <li><span class="hs-k">кто слушает</span>телефон слушает маячки или решётки (<span class="term" data-term="aod">AoD</span>)</li>
+                <li><span class="hs-k">где позиция</span>на телефоне - как в спутниковой навигации</li>
+                <li><span class="hs-k">следствие</span>годится для навигации по зданию, не годится для трекинга</li>
+              </ul>
+            </div>
+          </div>
+          <p class="hs-note"><b>Отсюда же берётся вопрос приватности, а не из злого умысла.</b>
+            Восходящая схема технически обязана знать, где метка: иначе она не сможет посчитать
+            позицию. Поэтому «мы не будем следить за людьми» реализуется не обещанием, а
+            конструкцией - хранить <span class="term" data-term="zone">зоны</span> вместо
+            траекторий. Подробнее - на слое «Что пойдёт не так».</p>
+        </div>
+
+        <!-- The calming fact for a newcomer, mirroring the donor guide's "минимальный путь":
+             of everything above, only four decisions are actually yours. -->
+        <div class="chain">
+          <div class="chain-head">
+            <span class="chain-title">Минимальный путь проекта</span>
+            <span class="chain-sub">четыре решения, и только в этом порядке</span>
+          </div>
+          <ol class="chain-flow">
+            <li class="chain-step" data-goto="cases"><span class="cs-n">1</span><span class="cs-body"><b>Событие</b><span class="cs-pol">что должно сработать</span></span></li>
+            <li class="chain-arrow" aria-hidden="true" role="presentation">⟶</li>
+            <li class="chain-step" data-goto="cases"><span class="cs-n">2</span><span class="cs-body"><b>Точность</b><span class="cs-pol">зона или метры</span></span></li>
+            <li class="chain-arrow" aria-hidden="true" role="presentation">⟶</li>
+            <li class="chain-step tech" data-goto="methods"><span class="cs-n">3</span><span class="cs-body"><b>Метод</b><span class="cs-pol">близость, время, угол</span></span></li>
+            <li class="chain-arrow" aria-hidden="true" role="presentation">⟶</li>
+            <li class="chain-step tech" data-goto="tech"><span class="cs-n">4</span><span class="cs-body"><b>Радио</b><span class="cs-pol">во что это обходится</span></span></li>
+          </ol>
+          <p class="chain-note"><b>Порядок здесь важнее содержания.</b> Проект, начатый с
+            выбора технологии («нам нужен UWB»), приходит к вопросу «а какое событие мы хотим
+            получить» уже после сметы. Обратный ход - от события - позволяет обнаружить, что
+            задача решается <span class="term" data-term="zone">зонами</span>, и сэкономить
+            порядок бюджета. Клик по шагу открывает соответствующий слой.</p>
+        </div>
+
+        <div class="hs">
+          <div class="hs-head">
+            <span class="hs-title">Карта гайда</span>
+            <span class="hs-sub">четыре слоя дальше · читать по порядку</span>
+          </div>
+          <ul class="gmap">
+            <li data-goto="methods" tabindex="0" role="button" style="--gm:var(--c-violet)">
+              <span class="gm-n">01</span>
+              <span class="gm-t">Как измеряют<small>откуда система знает, где метка: близость, уровень сигнала, время полёта, угол, радиокарта</small></span>
+              <span class="gm-go">открыть →</span>
+            </li>
+            <li data-goto="tech" tabindex="0" role="button" style="--gm:var(--c-blue)">
+              <span class="gm-n">02</span>
+              <span class="gm-t">На чём работает<small>шесть технологий в сравнении и расчёт: сколько анкеров, сколько живёт батарея, куда уходит бюджет</small></span>
+              <span class="gm-go">открыть →</span>
+            </li>
+            <li data-goto="cases" tabindex="0" role="button" style="--gm:var(--c-emerald)">
+              <span class="gm-n">03</span>
+              <span class="gm-t">Где это нужно<small>шесть задач со склада, производства, больницы и опасного объекта - от вопроса бизнеса к радио</small></span>
+              <span class="gm-go">открыть →</span>
+            </li>
+            <li data-goto="pilot" tabindex="0" role="button" style="--gm:var(--c-amber)">
+              <span class="gm-n">04</span>
+              <span class="gm-t">Что пойдёт не так<small>как читать паспортную точность, что делает металл, и какие вопросы задать до пилота</small></span>
+              <span class="gm-go">открыть →</span>
+            </li>
+          </ul>
+          <p class="hs-note">На всех слоях <b>клик по узлу или карточке</b> раскрывает панель
+            справа: назначение, связи, чем проверить на объекте и пример данных. Термины
+            подчёркнуты пунктиром - клик по любому открывает статью словаря, не уводя со
+            страницы.</p>
+        </div>
+      </div>

@@ -1,0 +1,97 @@
+      <!-- Layer 04. Seven pitfalls, each ending in questions for a vendor: the reader must
+           leave with a checklist rather than with anxiety. No SVG here - the material is a
+           list of failure modes, and a diagram would only decorate it. -->
+      <div class="layer-panel" id="panel-pilot" role="tabpanel">
+        <div class="board-head">
+          <h2>Что пойдёт не так</h2>
+          <span class="hint">Клик по карточке - разбор и вопросы поставщику</span>
+        </div>
+
+        <details class="layer-intro">
+          <summary>Какие вопросы задать до пилота?</summary>
+          <div class="board-lede">
+            <p>Все семь пунктов ниже - не редкие неудачи, а <b>нормальное поведение
+              физики и организаций</b>. Паспортная точность измерена в лучших условиях и легко путается с
+              <span class="term" data-term="accuracy-precision">повторяемостью</span>;
+              металл и вода мешают радио; кабельные трассы дороже железа; батарея кончается;
+              трекинг людей упирается в право, а не в технику. Ни один из этих пунктов не
+              означает «RTLS не работает» - каждый означает «вот про что надо договориться
+              до денег».</p>
+            <p>Пилот, который это проверяет, стоит немного и экономит много. Правило простое:
+              <b>пилот проводится на худшем участке, а не на показательном</b> - между
+              стеллажами, в проходе с металлической тарой, на границе зон, с меткой на
+              человеке, который стоит к анкеру спиной. Средина пустого зала выглядит отлично у
+              всех поставщиков.</p>
+          </div>
+        </details>
+
+        <div class="pit-grid">
+          <button type="button" class="pit" data-pitfall="datasheet" data-role="env">
+            <span class="pit-n">01</span>
+            <span class="pit-t">Как читать «точность 10 см»</span>
+            <span class="pit-d">Медиана вместо хвоста, статика вместо движения, пустой зал вместо цеха.</span>
+          </button>
+          <button type="button" class="pit" data-pitfall="nlos" data-role="env">
+            <span class="pit-n">02</span>
+            <span class="pit-t">Что делает металл, вода и человек</span>
+            <span class="pit-d">Отражение проходит длиннее, поэтому метка не дрожит - она уезжает.</span>
+          </button>
+          <button type="button" class="pit" data-pitfall="geometry" data-role="anchor">
+            <span class="pit-n">03</span>
+            <span class="pit-t">Почему анкеры в линию не работают</span>
+            <span class="pit-d">Геометрия расстановки усиливает ошибку сильнее, чем количество её уменьшает.</span>
+          </button>
+          <button type="button" class="pit" data-pitfall="sync-power" data-role="sync">
+            <span class="pit-n">04</span>
+            <span class="pit-t">Кабели, которых нет в спецификации</span>
+            <span class="pit-d">PoE, синхронизация, работы на высоте, обследование - обычно это и есть смета.</span>
+          </button>
+          <button type="button" class="pit" data-pitfall="battery-rate" data-role="tag">
+            <span class="pit-n">05</span>
+            <span class="pit-t">Частота обновления против батареи</span>
+            <span class="pit-d">И против размера парка: эфир один, и его делят все метки.</span>
+          </button>
+          <button type="button" class="pit" data-pitfall="privacy" data-role="person">
+            <span class="pit-n">06</span>
+            <span class="pit-t">Метка на бейдже - это уже не техника</span>
+            <span class="pit-d">Согласие, цель, срок хранения, доступ. Технический ответ - хранить зоны, не траектории.</span>
+          </button>
+          <button type="button" class="pit" data-pitfall="integration" data-role="consumer">
+            <span class="pit-n">07</span>
+            <span class="pit-t">Куда пойдут координаты</span>
+            <span class="pit-d">Формат выдачи, привязка к плану и владение связью «метка ↔ объект».</span>
+          </button>
+        </div>
+
+        <!-- The checklist is the take-away artifact of the whole guide: it is what a reader
+             can paste into a meeting invite. Deliberately phrased as demands, not topics. -->
+        <div class="chain">
+          <div class="chain-head">
+            <span class="chain-title">Чек-лист пилота</span>
+            <span class="chain-sub">семь пунктов, которые проверяются за один день на объекте</span>
+          </div>
+          <ol class="checklist">
+            <li><b>Событие названо.</b> Записано, что должно сработать, кто отреагирует и какая
+              метрика изменится. Формулировка «будем видеть на карте» к пилоту не допускается.</li>
+            <li><b>Требование записано проверяемо.</b> «В 95% фиксаций ошибка не больше X на
+              маршруте Y при движении Z» - вместо «нужна высокая точность».</li>
+            <li><b>Пилот на худшем участке.</b> Между стеллажами, у металла, на границе зон,
+              с меткой на человеке спиной к анкеру.</li>
+            <li><b>Замер вместо демонстрации.</b> Рулетка и заранее отмеченные точки; сравнение
+              с показаниями системы в движении, а не стоя.</li>
+            <li><b>Смета целиком.</b> Анкеры, монтаж, кабель, обследование, лицензии, замена
+              батарей на весь срок - одним списком.</li>
+            <li><b>Интеграция проверена на пилоте.</b> Событие дошло до WMS или MES, а не до
+              демонстрационного дашборда поставщика.</li>
+            <li><b>Люди предупреждены.</b> Если трекинг касается сотрудников - объяснено, что
+              собирается и зачем, и в системе включено хранение зон, а не траекторий.</li>
+          </ol>
+          <p class="chain-note"><b>Дисклеймер, который стоит повторить здесь, а не только в
+            подвале:</b> этот гайд - образовательный материал без привязки к поставщику. Числа в
+            расчётах показывают порядок величины и форму зависимости; проектные решения
+            принимаются по обследованию конкретного объекта.</p>
+        </div>
+
+        <p class="xgoto-line">Вернуться к началу и перечитать цепочку:
+          <span class="xgoto" data-goto="intro" tabindex="0" role="button">← Что это</span></p>
+      </div>

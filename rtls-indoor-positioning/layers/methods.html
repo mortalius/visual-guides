@@ -1,0 +1,172 @@
+      <!-- Layer 01. Six ways to answer «где метка», ordered cheapest → most exact. The SVG
+           carries one comparison only: three distances against two angles, because that
+           single picture explains the whole economics of BLE AoA. Every chip on the cards
+           ([data-calc]) is filled by app.js from model.js - no number is typed here. -->
+      <div class="layer-panel" id="panel-methods" role="tabpanel">
+        <div class="board-head">
+          <h2>Как измеряют</h2>
+          <span class="hint">Клик по карточке - разбор метода: что ломается и как проверить</span>
+        </div>
+
+        <details class="layer-intro">
+          <summary>Откуда система вообще знает, где метка?</summary>
+          <div class="board-lede">
+            <p>У радио есть ровно четыре вещи, которые можно измерить: <b>слышно ли</b>
+              вообще, <b>насколько громко</b>, <b>когда</b> пришёл сигнал и <b>с какой
+              стороны</b>. Все шесть методов ниже - это разные способы превратить одно из
+              этих четырёх измерений в ответ. Ничего пятого не существует, и понимание этого
+              снимает большую часть магии из презентаций поставщиков.</p>
+            <p>Дальше вся разница в том, <b>что превращается в деньги</b>. Факт слышимости
+              стоит одного приёмника и даёт зону. Время полёта даёт сантиметры и требует
+              различать наносекунды. Угол даёт метры и позволяет обойтись двумя анкерами
+              вместо трёх. Уровень сигнала не стоит почти ничего - и метров не даёт.</p>
+            <p>Порядок карточек - от самого дешёвого к самому точному, и это же порядок, в
+              котором метод стоит рассматривать в проекте: первый подходящий и есть
+              правильный.</p>
+          </div>
+        </details>
+
+        <div class="diagram-scroll">
+        <svg class="diagram" viewBox="0 0 1200 440" role="img" aria-label="Три расстояния против двух углов: геометрия расчёта позиции">
+          <defs>
+            <marker id="ar-m" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M0.5,0.5 L9,5 L0.5,9.5" fill="none" stroke="var(--border-2)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+          </defs>
+
+          <text class="geo-cap" x="20" y="30">ПО РАССТОЯНИЯМ · нужны три анкера</text>
+          <text class="geo-cap" x="660" y="30">ПО УГЛАМ · достаточно двух</text>
+          <line class="geo-div" x1="610" y1="50" x2="610" y2="410"/>
+
+          <!-- left: lateration. Circles are the textbook picture: each measured distance is
+               a circle around its anchor, and the position is where they meet. -->
+          <circle class="geo-arc" cx="60" cy="90" r="246"/>
+          <circle class="geo-arc" cx="500" cy="90" r="246"/>
+          <circle class="geo-arc" cx="280" cy="350" r="160"/>
+          <line class="geo-d" x1="60" y1="90" x2="280" y2="200"/>
+          <line class="geo-d" x1="500" y1="90" x2="280" y2="200"/>
+          <line class="geo-d" x1="280" y1="350" x2="280" y2="200"/>
+          <text class="geo-lbl" x="150" y="132">d₁</text>
+          <text class="geo-lbl" x="400" y="132">d₂</text>
+          <text class="geo-lbl" x="292" y="290">d₃</text>
+
+          <!-- the NLOS lesson, drawn: a reflected signal travelled further, so the measured
+               circle is too big and the fix moves away - it does not jitter around the truth -->
+          <circle class="geo-arc nlos" cx="60" cy="90" r="300"/>
+          <line class="geo-ghost-link" x1="280" y1="200" x2="332" y2="238"/>
+          <g class="geo-ghost"><circle cx="338" cy="243" r="10"/><text class="geo-name ghost" x="380" y="247">ложная позиция</text></g>
+          <text class="geo-nlos" x="20" y="404">отражение: путь длиннее ⇒ окружность больше ⇒ точка уехала</text>
+
+          <g class="geo-node" data-role="anchor"><circle cx="60" cy="90" r="13"/><text class="geo-name" x="60" y="66">Анкер 1</text></g>
+          <g class="geo-node" data-role="anchor"><circle cx="500" cy="90" r="13"/><text class="geo-name" x="500" y="66">Анкер 2</text></g>
+          <g class="geo-node" data-role="anchor"><circle cx="280" cy="350" r="13"/><text class="geo-name" x="280" y="382">Анкер 3</text></g>
+          <g class="geo-node tag" data-role="tag"><circle cx="280" cy="200" r="11"/><text class="geo-name" x="280" y="180">Метка</text></g>
+
+          <!-- right: angulation. Two bearings from two known points intersect in one point. -->
+          <line class="geo-d ang" x1="700" y1="90" x2="1000" y2="330" marker-end="url(#ar-m)"/>
+          <line class="geo-d ang" x1="1140" y1="90" x2="840" y2="330" marker-end="url(#ar-m)"/>
+          <path class="geo-ang" d="M700,130 A40,40 0 0 0 731,121"/>
+          <path class="geo-ang" d="M1140,130 A40,40 0 0 1 1109,121"/>
+          <text class="geo-lbl" x="716" y="152">α</text>
+          <text class="geo-lbl" x="1110" y="152">β</text>
+          <g class="geo-node" data-role="anchor"><circle cx="700" cy="90" r="13"/><text class="geo-name" x="700" y="66">Анкер 1</text></g>
+          <g class="geo-node" data-role="anchor"><circle cx="1140" cy="90" r="13"/><text class="geo-name" x="1140" y="66">Анкер 2</text></g>
+          <g class="geo-node tag" data-role="tag"><circle cx="920" cy="266" r="11"/><text class="geo-name" x="920" y="246">Метка</text></g>
+          <text class="geo-nlos" x="660" y="404">ошибка угла растёт с расстоянием: далеко от анкера 1° - это метры</text>
+        </svg>
+        </div>
+
+        <div class="legend">
+          <span class="lg"><span class="lg-line"></span>измеренное расстояние или направление</span>
+          <span class="lg"><span class="lg-line nlos"></span>то же измерение, испорченное отражением</span>
+          <span class="lg"><span class="lg-circ"></span>все точки, где метка могла бы быть по одному измерению</span>
+        </div>
+
+        <div class="mth-grid">
+          <button type="button" class="mth" data-method="proximity" data-role="method">
+            <span class="mth-n">01</span>
+            <span class="mth-t">Близость и зона</span>
+            <span class="mth-d">Слышно - значит рядом. Ответ - имя места, координаты не считаются вовсе.</span>
+            <span class="mth-chips"><span class="chip" data-calc="acc-proximity"></span><span class="chip" data-calc="anch-proximity"></span><span class="chip" data-calc="sync-proximity"></span></span>
+          </button>
+          <button type="button" class="mth" data-method="rssi-lateration" data-role="method">
+            <span class="mth-n">02</span>
+            <span class="mth-t">Трилатерация по <span class="term" data-term="rssi">RSSI</span></span>
+            <span class="mth-d">Громкость - в расстояние, три расстояния - в точку. Дёшево и почти не работает в метрах.</span>
+            <span class="mth-chips"><span class="chip" data-calc="acc-rssi-lateration"></span><span class="chip" data-calc="anch-rssi-lateration"></span><span class="chip" data-calc="sync-rssi-lateration"></span></span>
+          </button>
+          <button type="button" class="mth" data-method="twr" data-role="method">
+            <span class="mth-n">03</span>
+            <span class="mth-t">Двусторонний обмен (<span class="term" data-term="twr">TWR</span>)</span>
+            <span class="mth-d"><span class="term" data-term="tof">Время полёта</span> через обмен пакетами. Общие часы не нужны - платим эфиром и батареей.</span>
+            <span class="mth-chips"><span class="chip" data-calc="acc-twr"></span><span class="chip" data-calc="anch-twr"></span><span class="chip" data-calc="sync-twr"></span></span>
+          </button>
+          <button type="button" class="mth" data-method="tdoa" data-role="method">
+            <span class="mth-n">04</span>
+            <span class="mth-t">Разность времён (<span class="term" data-term="tdoa">TDoA</span>)</span>
+            <span class="mth-d">Метка крикнула один раз, анкеры засекли моменты по общим часам. Метка живёт долго.</span>
+            <span class="mth-chips"><span class="chip" data-calc="acc-tdoa"></span><span class="chip" data-calc="anch-tdoa"></span><span class="chip" data-calc="sync-tdoa"></span></span>
+          </button>
+          <button type="button" class="mth" data-method="aoa" data-role="method">
+            <span class="mth-n">05</span>
+            <span class="mth-t">Угол прихода (<span class="term" data-term="aoa">AoA</span>)</span>
+            <span class="mth-d">Антенная решётка определяет направление. Два анкера вместо трёх - отсюда вся экономика.</span>
+            <span class="mth-chips"><span class="chip" data-calc="acc-aoa"></span><span class="chip" data-calc="anch-aoa"></span><span class="chip" data-calc="sync-aoa"></span></span>
+          </button>
+          <button type="button" class="mth" data-method="fingerprint" data-role="method">
+            <span class="mth-n">06</span>
+            <span class="mth-t"><span class="term" data-term="fingerprint">Радиокарта</span></span>
+            <span class="mth-d">Сравнение с заранее снятой картой уровней. Новых анкеров ноль, обследование обязательно.</span>
+            <span class="mth-chips"><span class="chip" data-calc="acc-fingerprint"></span><span class="chip" data-calc="anch-fingerprint"></span><span class="chip" data-calc="sync-fingerprint"></span></span>
+          </button>
+        </div>
+
+        <div class="callout"><b>Сверху на любой метод кладут две добавки.</b>
+          <span class="term" data-term="dead-reckoning">Счисление пути</span> достраивает
+          траекторию по датчикам самого объекта и позволяет пережить участок, где радио не
+          слышно. <span class="term" data-term="sensor-fusion">Фьюжн</span> смешивает радио,
+          инерцию и план помещения - и не пускает метку сквозь стену. Обе добавки улучшают
+          картинку и обе добавляют <span class="term" data-term="latency">задержку</span>:
+          там, где система вмешивается в процесс, это уже не бесплатно.</div>
+
+        <details class="deep">
+          <summary>Почему 10 см - это треть наносекунды (и что из этого следует)</summary>
+          <div class="deep-body">
+            <p><b>Радиосигнал проходит <span data-calc="ns-metres"></span> за одну
+              наносекунду.</b> Это единственная формула, нужная, чтобы понять всю
+              разницу между технологиями: измерить расстояние по времени - значит измерить
+              время с точностью, пропорциональной желаемой ошибке.</p>
+            <p><b>Отсюда бюджет по времени.</b> На точность 3 м нужно различать
+              <span data-calc="budget-3m"></span> - это умеет обычная цифровая схема. На
+              точность 10 см нужно <span data-calc="budget-10cm"></span> - и вот здесь
+              заканчиваются обычные радиомодули и начинается
+              <span class="term" data-term="uwb">UWB</span> с его короткими импульсами.
+              В <span class="term" data-term="twr">TWR</span> бюджет вдвое мягче
+              (<span data-calc="budget-10cm-twr"></span>): измеряется круговое время, и на
+              дистанцию влияет половина ошибки.</p>
+            <p><b>Следствие для чтения предложений.</b> Если система заявляет сантиметры,
+              спросите, чем она измеряет время. Если ответ - «по уровню сигнала», сантиметров
+              не будет ни при какой обработке: у измерения просто нет нужного разрешения.</p>
+          </div>
+        </details>
+
+        <details class="deep">
+          <summary>Почему по уровню сигнала не получаются метры</summary>
+          <div class="deep-body">
+            <p><b>Уровень сигнала падает с расстоянием предсказуемо только в чистом поле.</b>
+              Модель затухания даёт для уровня −75 дБм расстояние
+              <span data-calc="rssi-mid"></span>. Пока это выглядит как измерение.</p>
+            <p><b>Теперь добавим реальность.</b> Отражения от стеллажей и проходящий мимо
+              человек легко меняют уровень на ±6 дБ. Те же −75 дБм с этим разбросом означают
+              расстояние от <span data-calc="rssi-near"></span> до
+              <span data-calc="rssi-far"></span> - то есть неопределённость в
+              <span data-calc="rssi-ratio"></span> раза. Это не шум вокруг правильного
+              значения, который усредняется: пока стеллаж стоит на месте, ошибка постоянна.</p>
+            <p><b>Что с этим делают на практике.</b> Не борются, а меняют вопрос. Тот же
+              уровень сигнала прекрасно отвечает «у какого приёмника метка ближе всего», то
+              есть даёт <span class="term" data-term="zone">зону</span>. Метры получают
+              другими методами - или мирятся с тем, что «метры» в предложении означают
+              «примерно там же».</p>
+          </div>
+        </details>
+      </div>

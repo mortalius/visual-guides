@@ -1,0 +1,101 @@
+      <!-- Layer 03 - the layer that proves the guide's thesis. Every card is read right to
+           left: business question → object → required accuracy → method → radio → event.
+           The «нужная точность» chip and the tech label are filled by app.js from CASES +
+           RADIO, so a card cannot claim an accuracy its technology does not deliver. -->
+      <div class="layer-panel" id="panel-cases" role="tabpanel">
+        <div class="board-head">
+          <h2>Где это нужно</h2>
+          <span class="hint">Клик по карточке - вся цепочка решения и метрика успеха</span>
+        </div>
+
+        <details class="layer-intro">
+          <summary>Какая точность нужна на самом деле?</summary>
+          <div class="board-lede">
+            <p>Шесть задач из четырёх отраслей. Они подобраны не по разнообразию индустрий, а
+              по <b>лестнице точности</b>: от ответа «в этой аллее» до десяти сантиметров - и
+              каждая ступень показывает, откуда требование взялось. Ни в одной карточке
+              точность не выбрана: она посчитана из размера участка, из скорости погрузчика
+              или из ширины между соседними болтами.</p>
+            <p>Отдельно стоит обратить внимание на два кейса, которые ломают привычную логику
+              «точнее - лучше». В предупреждении о столкновении решает не точность, а
+              <span class="term" data-term="latency">задержка</span>. В перекличке при
+              эвакуации - не точность, а надёжность доставки: ответ «неизвестно» там означает
+              отказ системы, а не пропуск данных.</p>
+            <p>Полезное упражнение при чтении: закройте столбец «Радио» и попробуйте пройти
+              цепочку сами. Если у вас получается другое радио - вероятно, вы иначе
+              сформулировали событие, и это ровно тот разговор, который стоит провести до
+              коммерческого предложения.</p>
+          </div>
+        </details>
+
+        <!-- Accuracy ladder: the same six cases arranged by what they actually need.
+             Half of them deliberately sit on the «зона» step, to make the cheap answer
+             visible before the expensive one. Counts come from CASES[*].step via app.js. -->
+        <div class="ladder" aria-label="Лестница точности">
+          <div class="ladder-step" data-role="event">
+            <span class="ld-h">Зона</span>
+            <span class="ld-sub">аллея, комната, участок</span>
+            <span class="ld-n" data-calc="ladder-zone"></span>
+          </div>
+          <div class="ladder-step" data-role="method">
+            <span class="ld-h">Метры</span>
+            <span class="ld-sub">различить соседние участки</span>
+            <span class="ld-n" data-calc="ladder-metres"></span>
+          </div>
+          <div class="ladder-step" data-role="tag">
+            <span class="ld-h">Десятки см</span>
+            <span class="ld-sub">позиция участвует в решении</span>
+            <span class="ld-n" data-calc="ladder-cm"></span>
+          </div>
+          <p class="ladder-note">Каждая ступень - это порядок бюджета, а не «настройка
+            точнее». Половина проектов, начатых с третьей ступени, после разговора о событии
+            оказывается на первой.</p>
+        </div>
+
+        <div class="case-grid">
+          <button type="button" class="case" data-case="pallet-search" data-role="consumer">
+            <span class="case-ind">Склад и логистика</span>
+            <span class="case-q">«В какой аллее паллета заказа 4417?»</span>
+            <span class="case-obj">Метка на таре · десятки тысяч единиц</span>
+            <span class="case-chips"><span class="chip need" data-calc="need-pallet-search"></span><span class="chip" data-calc="tech-pallet-search"></span></span>
+          </button>
+          <button type="button" class="case" data-case="forklift-pedestrian" data-role="person">
+            <span class="case-ind">Склад и логистика</span>
+            <span class="case-q">«Успеет ли водитель затормозить?»</span>
+            <span class="case-obj">Погрузчик и человек · решает задержка</span>
+            <span class="case-chips"><span class="chip need" data-calc="need-forklift-pedestrian"></span><span class="chip" data-calc="tech-forklift-pedestrian"></span></span>
+          </button>
+          <button type="button" class="case" data-case="wip-route" data-role="method">
+            <span class="case-ind">Производство</span>
+            <span class="case-q">«Сколько заказ ждал между операциями?»</span>
+            <span class="case-obj">Носитель заготовки · маршрут по цеху</span>
+            <span class="case-chips"><span class="chip need" data-calc="need-wip-route"></span><span class="chip" data-calc="tech-wip-route"></span></span>
+          </button>
+          <button type="button" class="case" data-case="torque-tool" data-role="tag">
+            <span class="case-ind">Производство</span>
+            <span class="case-q">«Тот ли болт затянули этим ключом?»</span>
+            <span class="case-obj">Инструмент · позиция входит в решение</span>
+            <span class="case-chips"><span class="chip need" data-calc="need-torque-tool"></span><span class="chip" data-calc="tech-torque-tool"></span></span>
+          </button>
+          <button type="button" class="case" data-case="pump-search" data-role="consumer">
+            <span class="case-ind">Здравоохранение</span>
+            <span class="case-q">«Где свободный инфузионный насос?»</span>
+            <span class="case-obj">Оборудование · ответ в помещениях</span>
+            <span class="case-chips"><span class="chip need" data-calc="need-pump-search"></span><span class="chip" data-calc="tech-pump-search"></span></span>
+          </button>
+          <button type="button" class="case" data-case="evacuation-roll-call" data-role="person">
+            <span class="case-ind">Опасный объект</span>
+            <span class="case-q">«Все вышли из зоны?»</span>
+            <span class="case-obj">Люди · «неизвестно» = отказ</span>
+            <span class="case-chips"><span class="chip need" data-calc="need-evacuation-roll-call"></span><span class="chip" data-calc="tech-evacuation-roll-call"></span></span>
+          </button>
+        </div>
+
+        <div class="callout"><b>Что общего у всех шести.</b> В каждой карточке последняя строка
+          - метрика, которую можно было измерить <b>до</b> проекта. Время поиска паллеты, число
+          опасных сближений, доля времени ожидания, время подтверждения эвакуации. Если такой
+          метрики нет, проект нечем закрыть: «видим всё на карте» не сравнивается ни с чем.</div>
+
+        <p class="xgoto-line">Дальше - то, что ломает любую из этих цепочек на практике:
+          <span class="xgoto" data-goto="pilot" tabindex="0" role="button">Что пойдёт не так →</span></p>
+      </div>

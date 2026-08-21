@@ -58,3 +58,23 @@ services:
       - path: /*
         name: X-Content-Type-Options
         value: nosniff
+
+  - type: web
+    name: rtls-guide
+    runtime: static
+    rootDir: rtls-indoor-positioning
+    buildCommand: ""
+    staticPublishPath: .
+    buildFilter:
+      paths:
+        - rtls-indoor-positioning/**
+    headers:
+      - path: /*.html
+        name: Cache-Control
+        value: public, max-age=300
+      - path: /*
+        name: Cache-Control
+        value: public, max-age=3600
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff

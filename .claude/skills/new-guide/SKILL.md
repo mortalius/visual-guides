@@ -54,6 +54,18 @@ skeleton.
 4. `:root` in `styles.css`: keep the canonical blocks byte-identical (they came from the donor,
    which passes the check). Rename the semantic accents to this guide's vocabulary - the values
    are fixed, the names are yours (`DESIGN.md` §1).
+4a. **Delete the donor CSS for components the new guide does not have, and decide the numbering
+   before writing a line of content.** A copied `styles.css` carries several hundred lines of
+   blocks for cross-sections that do not exist here (a stepper, a deployment topology, a
+   namespace frame), and their comments reference the *donor's* local section numbers - so
+   `check-tokens.mjs` fails on every one until you either delete the block or document that
+   number locally. In the RTLS guide this was ~300 of 1076 lines. Then pick one of two schemes
+   and record it in the local `DESIGN.md` header:
+   - keep the donor's numbers for components you inherited **with their comments** (cheapest,
+     keeps the comments truthful) and number your own strictly after the highest inherited one;
+   - or renumber the inherited comments into your own scheme - only worth it if few survive.
+   Either way the local `DESIGN.md` must contain a heading for **every** number the code cites,
+   including inherited ones: `check-tokens.mjs` resolves references, not intentions.
 5. Reset every `?v=N` to 1 - see `CLAUDE.md`, and count the places with `grep -n '?v=' index.html`
    rather than trusting prose.
 6. `node tools/check-tokens.mjs <guide-name>` - **now, before the first commit.** Fixing token

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RTLS: где что находится внутри здания - интерактивный гайд</title>
+<meta name="description" content="Введение в RTLS (real-time locating systems) с нуля: из чего состоит система, как она измеряет расстояние и угол, какое радио под какую задачу, шесть производственных кейсов и что проверить до пилота.">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" href="favicon.png" type="image/png">
+
+<!-- Open Graph: LinkedIn requires ABSOLUTE urls - relative ones silently yield no preview,
+     and the preview is cached per url for a long time, so a bad first scrape sticks.
+     og:url must match the canonical host exactly; update all three if the domain changes,
+     then re-run the LinkedIn Post Inspector BEFORE posting. See CONTRIBUTING.md §6.
+     og-preview.png does NOT exist yet - it needs real content to screenshot. Recorded in
+     TODO.md; the guide must not be linked anywhere until the file is there. -->
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Visual guides">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:url" content="https://rtls-guide.onrender.com/">
+<meta property="og:title" content="RTLS: где что находится внутри здания - интерактивный гайд">
+<meta property="og:description" content="Точность - не характеристика системы, а следствие бизнес-вопроса. Гайд с нуля: анатомия RTLS, шесть методов измерения, сравнение UWB / BLE / Wi-Fi / RFID, шесть кейсов со склада, производства и больницы и расчёт «цены точности» ползунками.">
+<meta property="og:image" content="https://rtls-guide.onrender.com/og-preview.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="627">
+<meta property="og:image:alt" content="Схема анатомии RTLS: метка, анкеры, движок расчёта и потребитель позиции с раскрытой панелью">
+<meta name="twitter:card" content="summary_large_image">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=6">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <!-- Two groups inside one eyebrow: rubric (indigo - rose is loss semantics here, see
+         DESIGN.md §1) + the standards the content is written against. Keep these in sync
+         with the version claims in data.js: they are checkable in upstream, unlike vendor
+         datasheets. -->
+    <div class="eyebrow">
+      <span class="eb-rubric">Explainer · Indoor positioning</span>
+      <span class="eb-topics">
+        <span>UWB · IEEE 802.15.4z</span> · <span>BLE · Bluetooth 6.3</span> · <span>Wi-Fi · IEEE 802.11az</span>
+      </span>
+    </div>
+    <h1>RTLS: где что находится внутри здания</h1>
+    <p class="subtitle">интерактивный гайд с нуля</p>
+    <p class="lede">RTLS (real-time locating system) отвечает на вопрос «где сейчас эта вещь или
+      человек» там, где спутник не добивает - в цеху, на складе, в шахте, в больнице.
+      Главная мысль гайда: <b>точность не выбирают, её выводят из бизнес-вопроса</b>. Система
+      собирается справа налево - от события, которое должно сработать, к геометрии измерения и
+      только потом к радио. Впервые слышите про RTLS - начинайте с «Что это»; дальше методы,
+      технологии, шесть кейсов и разбор того, что ломается на пилоте.</p>
+    <div class="doc-note">
+      <span><b>Клик по узлу</b> схемы - панель справа</span>
+      <span><b>Клик по термину</b> - статья словаря</span>
+      <span><b>Ползунки</b> - расчёт иллюстративный, не прогноз</span>
+    </div>
+  </header>
+
+  <div class="tabs" role="tablist" aria-label="Слои визуализации">
+    <button class="tab" role="tab" data-layer="intro" aria-selected="true">
+      <span class="tab-idx">00 / ОСНОВЫ</span>
+      <span class="tab-title">Что это</span>
+      <span class="tab-sub">из чего состоит и кто считает</span>
+    </button>
+    <button class="tab" role="tab" data-layer="methods" aria-selected="false">
+      <span class="tab-idx">01 / МЕТОДЫ</span>
+      <span class="tab-title">Как измеряют</span>
+      <span class="tab-sub">шесть способов и их геометрия</span>
+    </button>
+    <button class="tab" role="tab" data-layer="tech" aria-selected="false">
+      <span class="tab-idx">02 / ТЕХНОЛОГИИ</span>
+      <span class="tab-title">На чём работает</span>
+      <span class="tab-sub">радио, анкеры, батарея, цена</span>
+    </button>
+    <button class="tab" role="tab" data-layer="cases" aria-selected="false">
+      <span class="tab-idx">03 / КЕЙСЫ</span>
+      <span class="tab-title">Где это нужно</span>
+      <span class="tab-sub">шесть задач и нужная точность</span>
+    </button>
+    <button class="tab" role="tab" data-layer="pilot" aria-selected="false">
+      <span class="tab-idx">04 / ПИЛОТ</span>
+      <span class="tab-title">Что пойдёт не так</span>
+      <span class="tab-sub">вопросы поставщику до пилота</span>
+    </button>
+  </div>
+
+  <!-- Colour = role of the element, reused across layers by role. Hidden on the layers
+       without a node graph (see .color-key rules in styles.css). -->
+  <div class="color-key" aria-label="Легенда цветов элементов">
+    <span class="ck-title">Цвет = роль элемента</span>
+    <span class="ck tag">Метка · то, что ищут</span>
+    <span class="ck anchor">Анкер · приёмник на стене</span>
+    <span class="ck sync">Синхронизация · опорный сигнал</span>
+    <span class="ck engine">Движок · где считается позиция</span>
+    <span class="ck consumer">Потребитель · WMS / MES / дашборд</span>
+    <span class="ck method">Метод · геометрия измерения</span>
+    <span class="ck env">Среда · металл, вода, люди</span>
+    <span class="ck person">Человек · не то же, что вещь</span>
+    <span class="ck event">Событие · зона и правило</span>
+  </div>
+
+  <div class="stage">
+    <!-- Layer panels are fetched from layers/*.html and injected here at load.
+         See bootstrap script below and README.md ("Порядок загрузки"). -->
+    <div class="board" id="board">
+
+    </div>
+
+    <!-- ============ SIDE PANEL ============ -->
+    <!-- Two jobs, unlike the donor guide: the detail of a selected diagram node AND the
+         glossary entry of any term chip on the page (data-term). Hence the empty-state
+         copy mentions both. -->
+    <aside class="side" id="side">
+      <div class="side-empty" id="side-empty">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+          <circle cx="12" cy="11" r="3"/><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/>
+        </svg>
+        <p>Кликните узел на схеме - раскроются назначение, связи и пример данных.
+          Подчёркнутый пунктиром термин открывает статью словаря.</p>
+      </div>
+      <div class="side-content" id="side-content">
+        <div class="side-top">
+          <button class="side-close" id="side-close" aria-label="Закрыть">×</button>
+          <div class="side-kind" id="s-kind"><span id="s-kind-text"></span><span class="side-badge" id="s-badge"></span></div>
+          <div class="side-title" id="s-title"></div>
+          <div class="side-scope" id="s-scope"></div>
+          <!-- Owner chip (DESIGN.md §3.18): who buys this element and lives with it.
+               Sits OUTSIDE the panes on purpose - true of the element, not of one tab. -->
+          <div class="side-owner" id="s-owner"></div>
+          <div class="panel-tabs" role="tablist">
+            <button class="panel-tab" role="tab" data-pane="overview" aria-selected="true">Обзор</button>
+            <button class="panel-tab" role="tab" data-pane="data" aria-selected="false">Данные</button>
+          </div>
+        </div>
+        <div class="side-body">
+          <div class="pane active" id="pane-overview"></div>
+          <div class="pane" id="pane-data"></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- ?selftest=1 banner (CONTRIBUTING.md §5). Empty and display:none until run. -->
+  <pre id="selftest" aria-live="polite"></pre>
+
+  <footer class="foot">
+    <span>Образовательный референс · без привязки к поставщику · сверено со стандартами
+      IEEE 802.15.4z / Bluetooth 6.3 / IEEE 802.11az · <time datetime="2026-08">август 2026</time></span>
+    <span class="foot-author">Автор ·
+      <a href="https://t.me/mmmmort" target="_blank" rel="noopener noreferrer">Telegram</a> ·
+      <a href="https://www.linkedin.com/in/mortalius/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+    </span>
+    <span>Числа в расчётах иллюстративные: порядок величины, не прогноз для объекта</span>
+  </footer>
+</div>
+
+<!-- Bootstrap: fetch layer partials into #board, THEN load behavior.
+     model.js (pure arithmetic) and data.js (pure content model, no DOM) load up front.
+     app.js is loaded LAST, only after every layer is in the DOM - so its load-time
+     wiring (.node handlers, term chips, knobs, deep links) finds a complete document
+     and needs no async awareness. Requires an http server (fetch is blocked on
+     file://) - see README.md. Bump ?v=N on asset edits: the <link> above, both script
+     literals here, and the V constant below - grep -n '?v=' index.html. -->
+<script src="model.js?v=6"></script>
+<script src="data.js?v=6"></script>
+<script>
+(async () => {
+  const V = 6;                                     // cache-bust version (keep in sync with ?v= above)
+  const LAYERS = ['intro','methods','tech','cases','pilot'];   // injection order = tab order
+  const board = document.getElementById('board');
+  try {
+    const parts = await Promise.all(
+      LAYERS.map(async name => {
+        const res = await fetch(`layers/${name}.html?v=${V}`);
+        if(!res.ok) throw new Error(`${name}: HTTP ${res.status}`);
+        return res.text();
+      })
+    );
+    board.insertAdjacentHTML('beforeend', parts.join('\n'));
+  } catch(err){
+    board.innerHTML = `<div class="board-head"><h2>Не удалось загрузить слои</h2>`
+      + `<span class="hint">${err.message}. Запустите через http-сервер: <code>python3 -m http.server</code></span></div>`;
+    console.error('Layer load failed:', err);
+    return;                                        // don't load app.js against an empty board
+  }
+  const s = document.createElement('script');
+  s.src = `app.js?v=${V}`;
+  document.body.appendChild(s);
+})();
+</script>
+</body>
+</html>

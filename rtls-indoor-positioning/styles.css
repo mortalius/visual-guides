@@ -1,0 +1,792 @@
+/* ============================================================
+   RTLS (indoor positioning) visualization - styles
+   Theme: "Blueprint Journal" - light, high-contrast, colorful.
+   A cool paper canvas with a faint dot-grid, crisp white cards
+   with colored borders + soft tinted shadows, and dark navy
+   code blocks for punchy contrast. Each element is colour-coded
+   by role so the diagram reads as a legend of hues.
+
+   Type system (all families ship Cyrillic - the UI is Russian):
+     Playfair Display - high-contrast editorial serif for display/titles
+     Inter            - clean grotesque for UI & body
+     JetBrains Mono   - technical labels, payloads, all numbers
+
+   Accent contract (referenced across html/app.js/data.js):
+     --primary     (indigo)  active UI / logic / selected / engine / payload keys
+     --accent-fix  (emerald) measurement obtained, position computed, accuracy met
+     --accent-lost (rose)    tag lost, signal blocked, "unknown" answer
+     --accent-warning (amber) caveat: datasheet accuracy vs shop-floor accuracy
+   NOTE: rose carries loss semantics here, so .eyebrow uses --primary and
+   --brand is deliberately NOT defined - brand-accent rule, DESIGN.md §1.
+   Per-node hue lives in --na, assigned by [data-role] at the end of this file.
+   Structure lives in index.html; content in data.js; numbers in model.js;
+   behavior in app.js.
+   ============================================================ */
+:root{
+  /* base surfaces */
+  --bg-primary:#eaeef7;          /* page canvas */
+  --bg-surface:#ffffff;          /* cards / board / panel */
+  --bg-surface-2:#f3f6fc;        /* insets */
+  --bg-inset:#eef2fb;
+
+  /* borders */
+  --border:#dde3ef;              /* general hairline (referenced in html) */
+  --border-faint:#e8ecf5;
+  --border-muted:#c9d2e2;
+  --border-2:#8c98b2;            /* medium - edges / arrow markers */
+
+  /* typography */
+  --text-primary:#141a2b;        /* near-black navy */
+  --text-secondary:#414a5f;
+  --text-muted:#78839c;
+  --text-3:#98a3ba;              /* faint - config labels / soft markers */
+
+  /* semantic accents - names are this guide's, values are fixed (DESIGN.md §1) */
+  --primary:#4f46e5;             /* indigo - engine / logic / active UI */
+  --accent-code:#4f46e5;         /* payload keys inside dark code blocks */
+  --accent-code-weak:rgba(79,70,229,.10);
+  --accent-fix:#0a9e63;          /* emerald - position computed, accuracy met */
+  --accent-fix-weak:rgba(10,158,99,.12);
+  --accent-lost:#e11d48;         /* rose - tag lost, signal blocked, "unknown" */
+  --accent-lost-weak:rgba(225,29,72,.12);
+  --accent-warning:#b45309;      /* amber - caveats, datasheet vs reality */
+  --accent-warning-weak:rgba(217,119,6,.12);
+
+  /* category hues (for node color-coding) */
+  --c-indigo:#4f46e5;
+  --c-blue:#2563eb;
+  --c-cyan:#0891b2;
+  --c-teal:#0d9488;
+  --c-emerald:#0a9e63;
+  --c-violet:#7c3aed;
+  --c-amber:#d97706;
+  --c-rose:#e11d48;
+  --c-fuchsia:#c026d3;
+
+  /* layout */
+  --radius:9px;
+  --radius-lg:14px;
+  --shadow:0 1px 2px rgba(20,26,43,.05),0 14px 34px -14px rgba(30,41,90,.22);
+  --shadow-sm:0 1px 2px rgba(20,26,43,.05),0 6px 16px -10px rgba(30,41,90,.2);
+  --glow-code:drop-shadow(0 2px 5px rgba(79,70,229,.35));
+  --glow-fix:drop-shadow(0 2px 5px rgba(10,158,99,.4));
+
+  /* spacing (base 8px) */
+  --s-xs:8px; --s-sm:12px; --s-md:16px; --s-lg:24px; --s-xl:32px;
+
+  --font:"Inter",system-ui,-apple-system,Segoe UI,sans-serif;
+  --display:"Playfair Display",Georgia,"Times New Roman",serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+
+  --spring:cubic-bezier(.34,1.56,.64,1);   /* tactile snap ~ spring */
+  --ease:cubic-bezier(.4,0,.2,1);
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:var(--font);
+  color:var(--text-secondary);
+  background-color:var(--bg-primary);
+  background-image:
+    radial-gradient(circle at 12% -8%, rgba(79,70,229,.14), transparent 42%),
+    radial-gradient(circle at 92% 4%, rgba(10,158,99,.10), transparent 44%),
+    radial-gradient(circle at 60% 120%, rgba(225,29,72,.08), transparent 50%),
+    radial-gradient(circle at 1px 1px, rgba(72,86,120,.11) 1px, transparent 0);
+  background-size:auto,auto,auto,23px 23px;
+  background-attachment:fixed,fixed,fixed,fixed;
+  -webkit-font-smoothing:antialiased;
+  line-height:1.6;
+  font-size:16px;
+  min-height:100vh;
+}
+.wrap{max-width:1320px;margin:0 auto;padding:var(--s-xl) var(--s-lg) 72px;}
+
+/* custom scrollbars */
+*{scrollbar-width:thin;scrollbar-color:var(--border-muted) transparent;}
+*::-webkit-scrollbar{width:9px;height:9px;}
+*::-webkit-scrollbar-track{background:transparent;}
+*::-webkit-scrollbar-thumb{background:var(--border-muted);border-radius:999px;border:2px solid transparent;background-clip:padding-box;}
+*::-webkit-scrollbar-thumb:hover{background:var(--text-3);background-clip:padding-box;}
+
+/* ---------- Header ---------- */
+header.masthead{padding-bottom:var(--s-lg);margin-bottom:var(--s-lg);border-bottom:1px solid var(--border);}
+.eyebrow{
+  font-family:var(--mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--primary);font-weight:500;display:flex;align-items:center;gap:10px;margin-bottom:var(--s-md);
+  flex-wrap:wrap;                /* rubric + topics: let the second group drop to its own line */
+}
+.eyebrow::before{content:"";width:28px;height:3px;border-radius:3px;background:var(--primary);flex-shrink:0;}
+/* Rubric is indigo, not rose: rose is this guide's loss semantics, so the brand-accent
+   rule (DESIGN.md §1) forbids it in the eyebrow and --brand is not defined at all.
+   The covered standards step down to muted so they read as metadata, not a second rubric. */
+.eb-topics{
+  color:var(--text-muted);font-weight:400;letter-spacing:.14em;
+  display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;
+}
+/* Each component is one unbreakable unit: without this, a narrow viewport wraps
+   between the product name and its version ("ENVOY GATEWAY" / "V1.8.3"). */
+.eb-topics > span{white-space:nowrap;}
+.eb-topics::before{                /* hairline divider, not another "·" - the segments already use them */
+  content:"";width:1px;height:11px;background:var(--border-muted);flex-shrink:0;
+}
+h1{font-family:var(--display);font-size:clamp(1.4rem,2.93vw,2.27rem);font-weight:600;line-height:1.05;letter-spacing:-.015em;margin:0 0 6px;max-width:none;color:var(--text-primary);}
+/* Genre line under the title. Deliberately NOT Playfair: the display scale has no
+   tier below the section/tab level (see DESIGN.md §2), so the subtitle steps down
+   via family + weight + color instead of a new, smaller serif size. */
+.subtitle{font-family:var(--font);font-size:clamp(15px,1.25vw,17px);font-weight:500;color:var(--primary);margin:0 0 var(--s-md);letter-spacing:-.005em;}
+.lede{font-size:16px;color:var(--text-secondary);max-width:68ch;margin:0;}
+.lede b{color:var(--text-primary);font-weight:600;}
+.doc-note{margin-top:var(--s-lg);display:flex;flex-wrap:wrap;gap:var(--s-xs) var(--s-sm);font-family:var(--mono);font-size:12px;color:var(--text-muted);}
+.doc-note span{display:inline-flex;align-items:center;gap:8px;background:var(--bg-surface);border:1px solid var(--border-muted);border-radius:999px;padding:5px 14px;box-shadow:var(--shadow-sm);}
+.doc-note span::before{content:"";width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.doc-note span:nth-child(1)::before{background:var(--c-indigo);}
+.doc-note span:nth-child(2)::before{background:var(--c-emerald);}
+.doc-note span:nth-child(3)::before{background:var(--c-amber);}
+.doc-note b{color:var(--text-primary);font-weight:600;}
+
+/* ---------- Tabs (layer switch) ---------- */
+/* Grid, not flex: with six tabs the row wraps at most laptop widths, and a wrapping
+   flex row grows each line's items to fill it - the last line of two came out twice
+   as wide as the line of four above it. auto-fit keeps every cell the same width at
+   every viewport, and collapses the empty track so a full row still fills the width. */
+.tabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:var(--s-md);margin:var(--s-lg) 0;}
+.tab{
+  --tab-accent:var(--c-indigo);
+  appearance:none;cursor:pointer;background:var(--bg-surface);border:1px solid var(--border-muted);
+  border-radius:var(--radius-lg);padding:16px 20px 15px;text-align:left;font-family:var(--font);
+  /* explicit column: a <button> centres its content vertically, so the intro tab - the
+     only one without a .tab-sub - sat lower than its neighbours */
+  display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;
+  min-width:0;position:relative;overflow:hidden;box-shadow:var(--shadow-sm);
+  transition:transform 220ms var(--spring),border-color 200ms var(--ease),box-shadow 220ms var(--ease);
+}
+.tab::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--tab-accent);opacity:.35;transition:opacity 200ms var(--ease),width 200ms var(--ease);}
+/* "00 / Начало" is the entry point, not a fifth peer - it says so with a neutral accent
+   and no .tab-sub, not with a different width (an odd-width cell is what made the row
+   ragged in the donor guide). Each material layer takes the hue of the role it is about:
+   methods = the measurement itself (violet), tech = the fixed radio infrastructure
+   (blue), cases = what consumes the position (emerald), pilot = the environment that
+   breaks it (amber). */
+.tab[data-layer="intro"]{--tab-accent:var(--border-2);}
+.tab[data-layer="methods"]{--tab-accent:var(--c-violet);}
+.tab[data-layer="tech"]{--tab-accent:var(--c-blue);}
+.tab[data-layer="cases"]{--tab-accent:var(--c-emerald);}
+.tab[data-layer="pilot"]{--tab-accent:var(--c-amber);}
+.tab .tab-idx{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;color:var(--text-muted);display:block;margin-bottom:6px;font-weight:500;}
+.tab .tab-title{font-family:var(--display);font-size:20px;font-weight:600;color:var(--text-primary);display:block;line-height:1.1;letter-spacing:-.01em;}
+.tab .tab-sub{font-size:12.5px;color:var(--text-secondary);display:block;margin-top:4px;}
+.tab:hover{transform:translateY(-3px);border-color:var(--tab-accent);box-shadow:var(--shadow);}
+.tab:hover::before{opacity:.7;}
+.tab[aria-selected="true"]{
+  border-color:var(--tab-accent);
+  background:color-mix(in srgb,var(--tab-accent) 6%,#fff);
+  box-shadow:0 0 0 1px var(--tab-accent),0 14px 30px -14px color-mix(in srgb,var(--tab-accent) 70%,transparent);
+}
+.tab[aria-selected="true"]::before{opacity:1;width:6px;}
+.tab[aria-selected="true"] .tab-idx{color:var(--tab-accent);}
+
+/* ---------- Stage layout (asymmetric) ---------- */
+.stage{display:grid;grid-template-columns:1fr 400px;gap:var(--s-lg);align-items:start;}
+@media (max-width:1120px){.stage{grid-template-columns:1fr;}}
+/* The side panel stays on EVERY layer here, unlike the donor guide, because it is not
+   only a node detail: every term chip (data-term) anywhere on the page opens its glossary
+   entry in it. For an audience meeting the vocabulary for the first time, a dictionary
+   that disappears on some tabs is worse than none - local DESIGN.md §3.21. */
+
+.board{background:var(--bg-surface);border:1px solid var(--border-muted);border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:var(--s-lg);position:relative;overflow:hidden;}
+.board::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:linear-gradient(90deg,var(--c-indigo),var(--c-cyan),var(--c-emerald),var(--c-amber),var(--c-rose));opacity:.9;}
+.board-head{display:flex;align-items:baseline;justify-content:space-between;gap:var(--s-md);margin:4px 0 var(--s-md);flex-wrap:wrap;}
+.board-head h2{font-family:var(--display);font-size:21px;font-weight:600;margin:0;letter-spacing:-.01em;color:var(--text-primary);}
+.board-head .hint{font-family:var(--mono);font-size:12px;color:var(--text-muted);}
+
+svg.diagram{width:100%;height:auto;display:block;}
+.layer-panel{display:none;}
+.layer-panel.active{display:block;animation:fadeUp 320ms var(--ease);}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:none;}}
+
+/* ---------- SVG nodes ---------- */
+.node{--na:var(--primary);cursor:pointer;transform-box:fill-box;transform-origin:center;transition:transform 200ms var(--spring);}
+.node:hover{transform:scale(1.03);}
+.node .node-box{
+  fill:color-mix(in srgb,var(--na) 7%,#fff);
+  stroke:color-mix(in srgb,var(--na) 42%,var(--border-muted));
+  stroke-width:1.5;
+  transition:stroke 200ms var(--ease),fill 200ms var(--ease);
+}
+.node:hover .node-box,.node:focus .node-box{stroke:var(--na);fill:color-mix(in srgb,var(--na) 12%,#fff);outline:none;}
+.node.selected .node-box{stroke:var(--na);stroke-width:2;fill:color-mix(in srgb,var(--na) 13%,#fff);filter:drop-shadow(0 3px 7px color-mix(in srgb,var(--na) 40%,transparent));}
+.node.selected .glow-ring{opacity:.55;}
+.glow-ring{fill:none;stroke:var(--na);stroke-width:5;opacity:0;transition:opacity 220ms var(--ease);}
+.node-kind{font-family:var(--mono);font-size:12.5px;letter-spacing:.08em;font-weight:700;text-transform:uppercase;fill:var(--na);}
+.node-title{font-family:var(--font);font-size:16.5px;font-weight:700;fill:var(--text-primary);letter-spacing:-.01em;}
+.node-sub{font-family:var(--mono);font-size:11px;fill:var(--text-muted);}
+.pod{fill:#fff;stroke:color-mix(in srgb,var(--na) 45%,var(--border-muted));stroke-width:1;}
+
+/* control-plane accent (dashed = non-request/config flow) */
+.node.control .node-box{stroke-dasharray:5 4;fill:color-mix(in srgb,var(--na) 5%,#fff);}
+
+/* ---------- edges ---------- */
+.edge path{fill:none;stroke-linecap:round;stroke:var(--border-2);stroke-width:2;}
+.edge-label{font-family:var(--mono);font-size:11.5px;font-weight:500;fill:var(--text-secondary);paint-order:stroke;stroke:var(--bg-surface);stroke-width:4.5;stroke-linejoin:round;}
+.edge.config path{stroke-dasharray:6 5;stroke:var(--text-3);}
+.edge.attach path{stroke:var(--primary);stroke-dasharray:4 4;}
+.edge.attach .edge-label{fill:var(--primary);}
+/* ---------- legend ---------- */
+.legend{display:flex;flex-wrap:wrap;gap:var(--s-xs) var(--s-lg);margin-top:var(--s-md);padding-top:var(--s-md);border-top:1px solid var(--border-faint);font-size:12.5px;color:var(--text-secondary);}
+.legend .lg{display:inline-flex;align-items:center;gap:9px;}
+.lg-line{width:28px;height:0;border-top:2px solid var(--border-2);border-radius:2px;}
+.lg-line.green{border-color:var(--accent-fix);}
+.lg-line.amber{border-color:var(--c-amber);}
+.lg-line.nlos{border-top-style:dashed;border-color:var(--c-amber);}
+/* an arc sample: the «all points at this distance» circle is not a line style */
+.lg-circ{width:16px;height:16px;border:1.2px solid var(--border-2);border-radius:50%;opacity:.55;flex-shrink:0;}
+.lg-line.blue{border-top-style:dashed;border-color:var(--primary);}
+.lg-line.cfg{border-top-style:dashed;border-color:var(--text-3);}
+.lg-box{width:26px;height:15px;border:1.5px dashed var(--border-2);border-radius:4px;background:var(--bg-surface-2);flex-shrink:0;}
+.legend code{font-family:var(--mono);font-size:11px;background:var(--accent-code-weak);color:var(--primary);padding:1px 4px;border-radius:4px;}
+/* a .callout (DESIGN.md §3.12) may also sit under a diagram, not only in the side panel:
+   for a remark that qualifies the whole schema rather than one node. Needs the gap the
+   side-panel flow provides for free. */
+.legend + .callout{margin-top:var(--s-md);}
+
+/* ---------- side panel ---------- */
+.side{position:sticky;top:var(--s-md);background:var(--bg-surface);border:1px solid var(--border-muted);border-radius:var(--radius-lg);box-shadow:var(--shadow);min-height:460px;display:flex;flex-direction:column;overflow:hidden;}
+.side-empty{padding:48px 30px;text-align:center;color:var(--text-muted);display:flex;flex-direction:column;align-items:center;gap:var(--s-md);justify-content:center;flex:1;}
+.side-empty svg{color:var(--primary);opacity:.75;padding:14px;background:var(--accent-code-weak);border-radius:50%;box-sizing:content-box;}
+.side-empty p{margin:0;font-size:14px;max-width:32ch;line-height:1.6;}
+
+.side-content{display:none;flex-direction:column;flex:1;min-height:0;}
+.side-content.active{display:flex;animation:fadeUp 320ms var(--ease);}
+.side-top{padding:var(--s-lg) var(--s-lg) 0;position:relative;background:linear-gradient(180deg,var(--bg-surface-2),transparent);}
+.side-kind{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.side-badge{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.04em;text-transform:none;padding:3px 8px;border-radius:999px;background:var(--bg-inset);color:var(--text-secondary);border:1px solid var(--border-muted);}
+.side-badge.eg{color:var(--primary);border-color:color-mix(in srgb,var(--primary) 35%,transparent);background:var(--accent-code-weak);}
+.side-title{font-family:var(--display);font-size:25px;font-weight:600;margin:10px 0 5px;letter-spacing:-.01em;color:var(--text-primary);line-height:1.1;}
+.side-scope{font-family:var(--mono);font-size:12px;color:var(--text-muted);}
+.side-close{position:absolute;top:var(--s-md);right:var(--s-md);width:32px;height:32px;border-radius:var(--radius);border:1px solid var(--border-muted);background:var(--bg-surface);cursor:pointer;color:var(--text-secondary);font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;transition:all 180ms var(--ease);box-shadow:var(--shadow-sm);}
+.side-close:hover{background:var(--primary);color:#fff;border-color:var(--primary);transform:rotate(90deg);}
+
+/* inner tabs (overview/manifest) */
+.panel-tabs{display:flex;gap:4px;margin-top:var(--s-md);border-bottom:1px solid var(--border-faint);}
+.panel-tab{appearance:none;cursor:pointer;background:transparent;border:none;font-family:var(--font);font-size:13.5px;font-weight:600;color:var(--text-muted);padding:11px 15px;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 180ms var(--ease);}
+.panel-tab:hover{color:var(--text-primary);}
+.panel-tab[aria-selected="true"]{color:var(--primary);border-bottom-color:var(--primary);}
+.panel-tab[disabled]{opacity:.35;cursor:not-allowed;}
+
+.side-body{padding:var(--s-lg);overflow-y:auto;flex:1;min-height:0;}
+.pane{display:none;}
+.pane.active{display:block;animation:fadeUp 280ms var(--ease);}
+
+.side-lead{font-size:14px;color:var(--text-secondary);margin:0 0 var(--s-lg);line-height:1.65;}
+.sect{margin-bottom:var(--s-lg);}
+.sect-h{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-secondary);margin:0 0 var(--s-sm);font-weight:700;display:flex;align-items:center;gap:10px;}
+.sect-h::after{content:"";flex:1;height:1px;background:var(--border-faint);}
+.field-row{margin-bottom:11px;font-size:13.5px;line-height:1.5;}
+.field-row:last-child{margin-bottom:0;}
+.field-row code,.side-lead code,.callout code,.ref-list code{font-family:var(--mono);font-size:12px;background:var(--accent-code-weak);color:var(--primary);padding:2px 6px;border-radius:5px;border:1px solid color-mix(in srgb,var(--primary) 20%,transparent);}
+.field-row .fd{color:var(--text-secondary);display:block;margin-top:4px;}
+/* refs: each item is an explicit directed edge SOURCE → TARGET, with this
+   node highlighted (.me), plus a caption (verb · field) below it. */
+.ref-list{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:9px;}
+.ref-item{background:var(--bg-surface-2);border:1px solid var(--border-faint);border-radius:var(--radius);padding:9px 12px;}
+.ref-edge{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;}
+.ref-edge .rn{font-family:var(--mono);font-size:11.5px;font-weight:600;color:var(--text-secondary);background:var(--bg-surface);border:1px solid var(--border-muted);border-radius:6px;padding:2px 8px;}
+.ref-edge .rn.me{color:var(--primary);background:var(--accent-code-weak);border-color:color-mix(in srgb,var(--primary) 32%,transparent);}
+.ref-edge .ra{font-family:var(--mono);font-weight:700;color:var(--text-3);flex-shrink:0;}
+.ref-meta{margin-top:5px;font-size:12.5px;color:var(--text-secondary);line-height:1.4;}
+.ref-meta code{font-family:var(--mono);font-size:11px;background:var(--accent-code-weak);color:var(--primary);padding:1px 5px;border-radius:4px;border:1px solid color-mix(in srgb,var(--primary) 18%,transparent);}
+.callout{background:var(--accent-warning-weak);border:1px solid color-mix(in srgb,var(--accent-warning) 30%,transparent);border-left:3px solid var(--accent-warning);border-radius:var(--radius);padding:12px 15px;font-size:13px;color:var(--accent-warning);line-height:1.55;}
+.callout b{font-weight:600;color:#92400e;}
+/* long field paths (Gateway.spec.infrastructure.parametersRef) must be allowed to break:
+   .board is overflow:hidden, so an unbreakable chip is silently CUT on narrow screens
+   rather than wrapping or scrolling - the text just ends mid-word and looks correct. */
+.callout code{background:#fff;color:var(--accent-warning);border-color:color-mix(in srgb,var(--accent-warning) 28%,transparent);overflow-wrap:anywhere;}
+
+/* manifest pane - dark navy block for punchy contrast */
+.manifest-pre{font-family:var(--mono);font-size:12.5px;line-height:1.75;background:#111830;color:#c3cde4;border:1px solid #26304f;border-left:3px solid var(--primary);border-radius:var(--radius);padding:15px 17px;overflow-x:auto;margin:0 0 var(--s-md);white-space:pre;tab-size:2;font-variant-numeric:tabular-nums;box-shadow:inset 0 1px 0 rgba(255,255,255,.03),var(--shadow-sm);}
+.manifest-pre .yk{color:#8ab4ff;border-bottom:1px dashed rgba(138,180,255,.5);cursor:pointer;padding-bottom:1px;transition:all 150ms var(--ease);border-radius:3px;}
+.manifest-pre .yk:hover{background:rgba(138,180,255,.15);color:#b8d0ff;}
+.manifest-pre .yk.active{background:var(--primary);color:#fff;border-bottom-color:transparent;font-weight:500;box-shadow:0 0 10px rgba(99,102,241,.6);padding:1px 4px;}
+.manifest-pre .c{color:#69769c;font-style:italic;}
+.manifest-pre .v{color:#6ee7a8;}
+.manifest-hint{font-size:12px;color:var(--text-muted);margin:0 0 var(--s-md);display:flex;align-items:center;gap:7px;}
+.manifest-hint svg{flex-shrink:0;color:var(--primary);}
+.manifest-hint b{color:var(--primary);font-weight:600;}
+
+.field-detail{border:1px solid var(--border-faint);border-radius:var(--radius);padding:0;overflow:hidden;background:var(--bg-surface-2);}
+.field-detail.empty{border-style:dashed;border-color:var(--border-muted);background:transparent;}
+.field-detail .fd-empty{padding:18px;font-size:13px;color:var(--text-muted);text-align:center;}
+.field-detail .fd-inner{padding:15px 17px;animation:fadeUp 280ms var(--ease);}
+.fd-field{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--primary);margin:0 0 12px;display:flex;align-items:center;gap:9px;}
+.fd-field .fd-tag{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--accent-warning);background:var(--accent-warning-weak);padding:2px 8px;border-radius:999px;border:1px solid color-mix(in srgb,var(--accent-warning) 28%,transparent);}
+.fd-block{margin-bottom:13px;}
+.fd-block:last-child{margin-bottom:0;}
+.fd-block h4{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);margin:0 0 5px;font-weight:700;}
+.fd-block p{margin:0;font-size:13.5px;color:var(--text-primary);line-height:1.55;}
+.fd-block ul{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:6px;}
+.fd-block li{font-size:13px;color:var(--text-secondary);display:flex;gap:9px;align-items:flex-start;line-height:1.45;}
+.fd-block li .a{color:var(--accent-fix);font-family:var(--mono);font-weight:700;flex-shrink:0;}
+.fd-block code{font-family:var(--mono);font-size:12px;background:var(--accent-code-weak);color:var(--primary);padding:1px 5px;border-radius:5px;border:1px solid color-mix(in srgb,var(--primary) 20%,transparent);}
+/* #8 failure-state block inside field detail */
+.fd-block.fd-fail{background:var(--accent-warning-weak);border:1px solid color-mix(in srgb,var(--accent-warning) 28%,transparent);border-left:3px solid var(--accent-warning);border-radius:var(--radius);padding:10px 12px;margin-top:2px;}
+.fd-block.fd-fail h4{color:var(--accent-warning);}
+.fd-block.fd-fail h4::before{content:"⚠ ";}
+.fd-block.fd-fail p{color:#92400e;}
+.fd-block.fd-fail code{background:#fff;color:var(--accent-warning);border-color:color-mix(in srgb,var(--accent-warning) 28%,transparent);}
+
+footer.foot{margin-top:var(--s-xl);padding-top:var(--s-md);border-top:1px solid var(--border);font-size:12px;color:var(--text-muted);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;font-family:var(--mono);}
+.foot-author{color:var(--text-3);}
+.foot time{color:var(--text-3);white-space:nowrap;}   /* keep "август 2026" from breaking mid-date */
+.foot-author a{color:var(--text-3);text-decoration:none;border-bottom:1px dotted color-mix(in srgb,var(--text-3) 55%,transparent);transition:color 160ms var(--ease),border-color 160ms var(--ease);}
+.foot-author a:hover{color:var(--primary);border-bottom-color:var(--primary);}
+
+/* =====================================================================
+   Components inherited from the donor guide, with their original section
+   numbers: colour legend, step chain, responsive rules.
+   ===================================================================== */
+
+/* ---------- #4 Resource color legend ---------- */
+.color-key{display:flex;flex-wrap:wrap;gap:8px 18px;margin:var(--s-sm) 0 0;padding:12px 16px;background:var(--bg-surface);border:1px solid var(--border-muted);border-radius:var(--radius);box-shadow:var(--shadow-sm);font-size:12px;color:var(--text-secondary);}
+.color-key .ck-title{font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--text-muted);font-weight:700;width:100%;margin-bottom:2px;}
+.color-key .ck{display:inline-flex;align-items:center;gap:8px;}
+.color-key .ck::before{content:"";width:11px;height:11px;border-radius:3px;flex-shrink:0;background:var(--ck);border:1px solid color-mix(in srgb,var(--ck) 55%,#000);}
+.ck.tag{--ck:var(--c-teal);}
+.ck.anchor{--ck:var(--c-blue);}
+.ck.sync{--ck:var(--c-cyan);}
+.ck.engine{--ck:var(--c-indigo);}
+.ck.consumer{--ck:var(--c-emerald);}
+.ck.method{--ck:var(--c-violet);}
+.ck.env{--ck:var(--c-amber);}
+.ck.person{--ck:var(--c-rose);}
+.ck.event{--ck:var(--c-fuchsia);}
+/* The legend explains node hues, so it is shown exactly where a node graph exists -
+   «Что это» (anatomy) and «Методы» (geometry) - and hidden on the three card layers,
+   where all nine roles would be a cipher with no subject. */
+.wrap[data-layer="tech"] .color-key,
+.wrap[data-layer="cases"] .color-key,
+.wrap[data-layer="pilot"] .color-key{display:none;}
+
+/* ---------- #1 Ordered filter chain ---------- */
+.chain{margin-top:var(--s-md);background:var(--bg-surface-2);border:1px solid var(--border-faint);border-radius:var(--radius);padding:var(--s-md);}
+.chain-head{display:flex;align-items:baseline;justify-content:space-between;gap:var(--s-sm);flex-wrap:wrap;margin-bottom:var(--s-sm);}
+.chain-title{font-family:var(--display);font-size:20px;font-weight:600;color:var(--text-primary);}
+.chain-sub{font-family:var(--mono);font-size:11px;color:var(--text-muted);}
+.chain-flow{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;counter-reset:cs;}
+.chain-step{display:flex;align-items:center;gap:9px;background:var(--bg-surface);border:1px solid var(--border-muted);border-radius:var(--radius);padding:9px 13px;transition:all 160ms var(--ease);cursor:pointer;box-shadow:var(--shadow-sm);}
+.chain-step:hover,.chain-step:focus{border-color:var(--primary);transform:translateY(-2px);outline:none;box-shadow:var(--shadow);}
+.chain-step .cs-n{font-family:var(--mono);font-size:12px;font-weight:700;color:#fff;background:var(--primary);width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.chain-step .cs-body{display:flex;flex-direction:column;line-height:1.25;}
+.chain-step .cs-body b{font-size:14px;font-weight:600;color:var(--text-primary);}
+.chain-step .cs-pol{font-family:var(--mono);font-size:11px;color:var(--text-muted);}
+/* the two steps that are technical decisions rather than decisions about the task */
+.chain-step.tech{background:color-mix(in srgb,var(--c-teal) 8%,#fff);border-color:color-mix(in srgb,var(--c-teal) 40%,transparent);}
+.chain-step.tech .cs-n{background:var(--c-teal);}
+.chain-step.tech:hover,.chain-step.tech:focus{border-color:var(--c-teal);box-shadow:var(--shadow);}
+/* real flex-item connectors between chain steps (not ::after - see lessons-learned: pseudo-element
+   arrows anchored with a negative offset don't fit an 8px gap and bleed onto the next box) */
+.chain-arrow{flex:0 0 auto;align-self:center;font-size:13px;line-height:1;color:var(--c-amber);opacity:.75;padding:0 1px;}
+.chain-note{margin:var(--s-sm) 0 0;font-size:12px;color:var(--text-muted);line-height:1.5;}
+.chain-note code{font-family:var(--mono);font-size:11.5px;background:var(--accent-code-weak);color:var(--primary);padding:1px 5px;border-radius:4px;}
+
+/* ---------- #6 Responsive ---------- */
+.diagram-scroll{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;}
+.diagram-scroll svg.diagram{min-width:640px;}
+@media (max-width:1120px){
+  .stage{grid-template-columns:1fr;}
+  .side{position:static;}
+}
+@media (max-width:680px){
+  .wrap{padding:var(--s-lg) var(--s-md) 56px;}
+  .tabs{gap:var(--s-sm);}
+  /* Two per row here (auto-fit resolves to 2 columns at this width): six tabs stacked
+     full-width added up to ~600px of navigation before the board, which on a 390px
+     screen is the entire first screen. */
+  .tab{padding:13px 15px 12px;}
+  .tab .tab-title{font-size:17px;}
+  .board{padding:var(--s-md);}
+  .chain-flow{gap:6px 14px;}
+  h1{font-size:clamp(1.13rem,4.67vw,1.47rem);}
+  /* The topics group always sits on its own line here, so the vertical hairline
+     would dangle at the start of it - drop it and let the line break do the dividing. */
+  .eyebrow{gap:4px 10px;}
+  .eb-topics{letter-spacing:.1em;}
+  .eb-topics::before{display:none;}
+  /* h1 shrinks here, so shrink the subtitle with it - otherwise the two lines
+     end up within ~3px of each other and the hierarchy reads flat */
+  .subtitle{font-size:13.5px;}
+  footer.foot{flex-direction:column;gap:4px;}
+}
+
+/* =====================================================================
+   Namespaces layer (tab 05): namespace boundaries + the three handshakes
+   ===================================================================== */
+
+/* ---------- three-handshake comparison strip (DESIGN.md §3.16) ---------- */
+.hs{margin-top:var(--s-md);background:var(--bg-surface-2);border:1px solid var(--border-faint);border-radius:var(--radius);padding:var(--s-md);}
+.hs-head{display:flex;align-items:baseline;justify-content:space-between;gap:var(--s-sm);flex-wrap:wrap;margin-bottom:var(--s-sm);}
+.hs-title{font-family:var(--display);font-size:20px;font-weight:600;color:var(--text-primary);}
+.hs-sub{font-family:var(--mono);font-size:11px;color:var(--text-muted);}
+.hs-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s-sm);}
+@media (max-width:860px){.hs-grid{grid-template-columns:1fr;}}
+.hs-card{--g:var(--primary);background:var(--bg-surface);border:1px solid var(--border-muted);border-top:3px solid var(--g);border-radius:var(--radius);padding:11px 14px 13px;box-shadow:var(--shadow-sm);min-width:0;}
+.hs-kind{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);font-weight:700;}
+.hs-card>b{display:block;font-family:var(--mono);font-size:12.5px;font-weight:700;margin-top:3px;color:color-mix(in srgb,var(--g) 82%,#000);overflow-wrap:anywhere;}
+.hs-card ul{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:7px;}
+.hs-card li{font-size:12.5px;line-height:1.45;color:var(--text-secondary);}
+.hs-card li b{color:var(--text-primary);font-weight:600;}
+.hs-k{display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);font-weight:700;}
+.hs-card code{font-family:var(--mono);font-size:11px;background:var(--accent-code-weak);color:var(--primary);padding:1px 4px;border-radius:4px;overflow-wrap:anywhere;}
+.hs-note{margin:var(--s-sm) 0 0;font-size:12px;color:var(--text-muted);line-height:1.55;}
+.hs-note b{color:var(--text-primary);font-weight:600;}
+.hs-note code{font-family:var(--mono);font-size:11.5px;background:var(--accent-code-weak);color:var(--primary);padding:1px 5px;border-radius:4px;}
+
+/* ---------- layer orientation (DESIGN.md §3.17) + deep dive (§3.20) ---------- */
+/* Two roles, deliberately different affordances: the orientation is always visible
+   (presence signals priority), the deep dive collapses behind a question. Native
+   <details>: no JS, no state to wire, keyboard-accessible for free. */
+details.layer-intro,details.deep{margin:0 0 var(--s-md);}
+details.deep{margin:var(--s-sm) 0 0;}
+/* Both summaries name a question in words, so they read as sentences, not as mono-caps
+   labels: a label ("Подробнее") does not tell the reader whether to open it, a question does.
+   The orientation sits one step larger - it is the way into the layer. */
+details.layer-intro>summary,details.deep>summary{
+  cursor:pointer;list-style:none;display:inline-flex;align-items:baseline;gap:7px;
+  font-family:var(--font);font-weight:600;color:var(--primary);padding:3px 0;
+}
+details.layer-intro>summary{font-size:13.5px;}
+details.layer-intro>summary::-webkit-details-marker,details.deep>summary::-webkit-details-marker{display:none;}
+details.layer-intro>summary::before,details.deep>summary::before{content:"▸";font-size:10px;transition:transform 180ms var(--ease);}
+details.layer-intro[open]>summary::before,details.deep[open]>summary::before{transform:rotate(90deg);}
+details.layer-intro>summary:hover,details.deep>summary:hover{color:var(--text-primary);}
+details.layer-intro>summary:focus-visible,details.deep>summary:focus-visible{outline:2px solid var(--primary);outline-offset:3px;border-radius:3px;}
+details.deep>summary{font-size:12.5px;}
+details.deep>summary code{font-family:var(--mono);font-size:11.5px;background:var(--accent-code-weak);padding:1px 4px;border-radius:4px;}
+/* body of a deep dive: same measure as the orientation, one step quieter */
+.deep-body{font-size:12.5px;line-height:1.6;color:var(--text-secondary);margin:7px 0 0;padding-left:14px;border-left:2px solid var(--border-faint);max-width:82ch;}
+.deep-body p{margin:0 0 8px;}
+.deep-body p:last-child{margin-bottom:0;}
+.deep-body b{color:var(--text-primary);font-weight:600;}
+.deep-body code{font-family:var(--mono);font-size:11.5px;background:var(--accent-code-weak);color:var(--primary);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere;}
+/* a visible orientation block sits directly under the board heading */
+.board-head + .board-lede{margin:10px 0 var(--s-md);}
+/* bridge sentence under an inner heading: one line saying what the block below is for
+   (never a heading immediately followed by content - see DESIGN.md §3.17) */
+.bridge{font-size:13px;line-height:1.55;color:var(--text-secondary);margin:0 0 var(--s-sm);max-width:82ch;}
+.bridge b{color:var(--text-primary);font-weight:600;}
+.bridge code{font-family:var(--mono);font-size:12px;background:var(--accent-code-weak);color:var(--primary);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere;}
+.board-lede{
+  font-size:14px;line-height:1.68;color:var(--text-secondary);
+  margin:8px 0 0;max-width:82ch;border-left:2px solid var(--border-faint);padding-left:14px;
+}
+.board-lede b{color:var(--text-primary);font-weight:600;}
+/* inline code in prose must wrap: .board is overflow:hidden, so a long chip
+   would be cut mid-word with no scrollbar (see README traps) */
+.board-lede code{font-family:var(--mono);font-size:12.5px;background:var(--accent-code-weak);color:var(--primary);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere;}
+.board-lede p{margin:0 0 9px;}
+.board-lede p:last-child{margin-bottom:0;}
+
+/* ---------- owner chip in the panel head (DESIGN.md §3.18) ---------- */
+/* Lives in .side-top, OUTSIDE the panes - visible in both Обзор and Манифест
+   without scrolling. Hidden when the panel carries no `owner`. */
+/* block, not flex: the freq line is long enough to wrap, and as a flex item it would
+   start a second line with a dangling separator */
+.side-owner{display:none;margin-top:7px;font-family:var(--mono);font-size:11.5px;color:var(--text-secondary);}
+.side-owner.shown{display:block;}
+.side-owner .ow-who{
+  position:relative;padding-left:15px;font-weight:700;
+  color:color-mix(in srgb,var(--ow,var(--text-muted)) 78%,#000);
+}
+.side-owner .ow-who::before{
+  content:"";position:absolute;left:0;top:.42em;width:8px;height:8px;border-radius:50%;
+  background:var(--ow,var(--text-muted));box-shadow:0 0 0 3px color-mix(in srgb,var(--ow,var(--text-muted)) 18%,transparent);
+}
+.side-owner .ow-freq{display:block;padding-left:15px;margin-top:2px;font-size:11px;color:var(--text-muted);}
+/* Owner roles for this guide: who buys, installs and lives with this element. Hues match
+   the "Кто за это отвечает" cards on the intro layer, so the two readings reinforce each
+   other. An unknown value just falls back to a grey dot. */
+.side-owner[data-owner="ИТ"]{--ow:var(--c-indigo);}
+.side-owner[data-owner="эксплуатация"]{--ow:var(--c-teal);}
+.side-owner[data-owner="охрана труда"]{--ow:var(--c-rose);}
+.side-owner[data-owner="вендор"]{--ow:var(--text-3);}
+
+/* ---------- "как проверить в кластере" (DESIGN.md §3.19) ---------- */
+.verify{display:flex;flex-direction:column;gap:9px;}
+.vf{background:var(--bg-surface-2);border:1px solid var(--border-faint);border-radius:var(--radius);padding:10px 12px;}
+.vf-cmd{
+  font-family:var(--mono);font-size:11.5px;line-height:1.5;color:var(--text-primary);
+  margin:0;white-space:pre-wrap;overflow-wrap:anywhere;
+}
+.vf-cmd::before{content:"$ ";color:var(--text-3);}
+/* NOT display:flex - the text carries inline <code> chips, and each one would become
+   its own flex item on a line that cannot wrap. Absolute marker + padding instead. */
+.vf-ok,.vf-bad{position:relative;padding-left:17px;font-size:12.5px;line-height:1.45;margin:7px 0 0;overflow-wrap:anywhere;}
+.vf-ok{color:color-mix(in srgb,var(--accent-fix) 88%,#000);}
+.vf-bad{color:var(--accent-warning);}
+.vf-ok::before,.vf-bad::before{position:absolute;left:0;top:0;font-weight:700;}
+.vf-ok::before{content:"✓";}
+.vf-bad::before{content:"✗";}
+.vf code{font-family:var(--mono);font-size:11.5px;background:#fff;border:1px solid var(--border-faint);color:inherit;padding:1px 4px;border-radius:4px;overflow-wrap:anywhere;}
+
+/* ---------- cross-layer chip, HTML form (DESIGN.md §3.11) ---------- */
+/* Same idea as .policy-hint on the Resources layer - dashed accent chip pointing at
+   another cross-section - but for HTML blocks, where SVG text is not available. */
+.xgoto-line{margin:var(--s-md) 0 0;font-size:13px;color:var(--text-secondary);}
+.xgoto-line code{font-family:var(--mono);font-size:12px;background:var(--accent-code-weak);color:var(--primary);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere;}
+.xgoto{
+  display:inline-block;cursor:pointer;font-weight:600;color:var(--primary);
+  background:color-mix(in srgb,var(--primary) 6%,#fff);border:1.3px dashed var(--primary);
+  border-radius:var(--radius);padding:2px 9px;transition:background 180ms var(--ease);
+}
+.xgoto:hover,.xgoto:focus-visible{background:color-mix(in srgb,var(--primary) 13%,#fff);outline:none;}
+
+/* ---------- intro layer: role cards + guide map ---------- */
+/* guide map: same row shape as .mig-map, but each row jumps to its layer */
+.gmap{list-style:none;margin:var(--s-sm) 0 0;padding:0;display:flex;flex-direction:column;gap:8px;}
+.gmap li{
+  display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:4px 12px;
+  background:var(--bg-surface);border:1px solid var(--border-faint);border-left:3px solid var(--gm,var(--primary));
+  border-radius:var(--radius);padding:9px 13px;cursor:pointer;
+  transition:transform 160ms var(--ease),border-color 160ms var(--ease),box-shadow 160ms var(--ease);
+}
+.gmap li:hover,.gmap li:focus-visible{transform:translateX(3px);border-color:var(--gm,var(--primary));box-shadow:var(--shadow-sm);outline:none;}
+.gmap .gm-n{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--gm,var(--primary));}
+.gmap .gm-t{font-size:13.5px;font-weight:600;color:var(--text-primary);}
+.gmap .gm-t small{display:block;font-weight:400;font-size:12px;color:var(--text-secondary);}
+.gmap .gm-go{font-family:var(--mono);font-size:12px;color:var(--text-muted);}
+.gmap li:hover .gm-go{color:var(--gm,var(--primary));}
+
+/* NOTE: the colour-key hiding rules for prose layers live with .color-key above; the
+   side panel is deliberately NOT hidden anywhere (see .stage). New components specific
+   to this guide are appended below, numbered from §3.5 in the local DESIGN.md. */
+
+@media (max-width:860px){
+  .gmap li{grid-template-columns:auto 1fr;}
+  .gmap .gm-go{display:none;}
+}
+
+/* =====================================================================
+   Components specific to this guide. Numbered from §3.21 in the local DESIGN.md: §3.1-3.4 are reserved
+   series-wide (root DESIGN.md §0), and §3.11-§3.20 are kept for the components
+   inherited from the donor guide, whose comments came with them.
+   ===================================================================== */
+
+/* ---------- #3.22 Term chip: the glossary as a cross-cutting feature ---------- */
+/* A dotted underline, not a link colour: the chip must be visibly clickable
+   without competing with the prose it sits inside. Terms appear INSIDE cards
+   that are themselves buttons, hence the raised z-index and the explicit
+   cursor - app.js stops propagation so the card does not also open. */
+.term{
+  cursor:pointer;font-weight:500;color:color-mix(in srgb,var(--primary) 88%,#000);
+  border-bottom:1.5px dotted color-mix(in srgb,var(--primary) 55%,transparent);
+  transition:background 160ms var(--ease),border-color 160ms var(--ease);
+  border-radius:3px;padding:0 1px;position:relative;
+}
+.term:hover,.term:focus-visible{background:var(--accent-code-weak);border-bottom-color:var(--primary);outline:none;}
+.term.selected{background:color-mix(in srgb,var(--primary) 16%,#fff);border-bottom-style:solid;}
+
+/* ---------- #3.23 Knobs and the «цена точности» calculator ---------- */
+/* The illustrative-not-a-quote disclaimer lives INSIDE .calc, next to the knobs,
+   because this is where a reader is most likely to mistake it for a quote. */
+.calc{margin-top:var(--s-md);background:var(--bg-surface-2);border:1px solid var(--border-faint);border-radius:var(--radius);padding:var(--s-md);}
+.calc .callout{margin-top:var(--s-sm);}
+.calc-grid{display:grid;grid-template-columns:300px 1fr;gap:var(--s-lg);margin-top:var(--s-md);align-items:start;}
+@media (max-width:900px){.calc-grid{grid-template-columns:1fr;}}
+.knobs{margin:0;padding:0;border:0;min-width:0;}
+.knob{margin-bottom:var(--s-md);}
+.knob:last-child{margin-bottom:0;}
+.knob-label{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:12.5px;color:var(--text-secondary);}
+.knob-label .kn{font-weight:500;}
+.knob .val{font-family:var(--mono);font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--primary);white-space:nowrap;}
+.knob input[type=range]{width:100%;margin:5px 0 0;accent-color:var(--primary);}
+.knob .hint{font-family:var(--mono);font-size:10.5px;color:var(--text-muted);margin-top:2px;}
+
+.calc-out{min-width:0;}
+.co-head{margin-bottom:var(--s-sm);}
+.co-h{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--text-muted);font-weight:700;}
+.co-tech{display:block;font-family:var(--display);font-size:21px;font-weight:600;color:var(--text-primary);line-height:1.15;margin-top:2px;}
+.co-sub{display:block;font-size:12.5px;color:var(--text-secondary);margin-top:3px;}
+.co-rows{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px;}
+/* grid, not flex: the middle number column must stay aligned across rows, and the
+   note column has to be allowed to wrap (it carries running text) */
+.co-rows li{display:grid;grid-template-columns:1fr auto;gap:2px 12px;background:var(--bg-surface);border:1px solid var(--border-faint);border-radius:var(--radius);padding:8px 12px;}
+.co-k{font-size:12.5px;color:var(--text-secondary);}
+.co-v{font-family:var(--mono);font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--text-primary);white-space:nowrap;text-align:right;}
+.co-n{grid-column:1 / -1;font-family:var(--mono);font-size:10.5px;color:var(--text-3);line-height:1.45;}
+.co-foot{margin:var(--s-sm) 0 0;font-size:12px;color:var(--text-muted);line-height:1.5;}
+
+/* budget proportion: three segments, because the third one (installation) is the
+   one nobody quotes - hiding it inside "инфраструктура" is what the bar prevents */
+.co-bars{margin-top:var(--s-md);}
+.bar{display:flex;height:14px;border-radius:999px;overflow:hidden;border:1px solid var(--border-faint);margin-top:6px;background:var(--bg-inset);}
+.bar .seg{height:100%;}
+.bar .seg.hw{background:var(--c-blue);}
+.bar .seg.inst{background:var(--c-amber);}
+.bar .seg.fleet{background:var(--c-teal);}
+.bar-key{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:7px;font-family:var(--mono);font-size:10.5px;color:var(--text-secondary);}
+.bar-key .bk{display:inline-flex;align-items:center;gap:6px;}
+.bar-key .bk::before{content:"";width:9px;height:9px;border-radius:2px;flex-shrink:0;}
+.bar-key .bk.hw::before{background:var(--c-blue);}
+.bar-key .bk.inst::before{background:var(--c-amber);}
+.bar-key .bk.fleet::before{background:var(--c-teal);}
+
+/* rose variant of the callout: "this does not fit" is loss semantics, not a caveat */
+.callout.warn{background:var(--accent-lost-weak);border-color:color-mix(in srgb,var(--accent-lost) 30%,transparent);border-left-color:var(--accent-lost);color:color-mix(in srgb,var(--accent-lost) 82%,#000);}
+.callout.warn b{color:#9f1239;}
+
+/* ---------- #3.24 Method cards ---------- */
+.mth-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:var(--s-sm);margin-top:var(--s-md);}
+.mth,.case,.pit{
+  appearance:none;cursor:pointer;text-align:left;font-family:inherit;
+  background:var(--bg-surface);border:1px solid var(--border-muted);border-radius:var(--radius);
+  border-left:3px solid var(--na,var(--primary));padding:11px 14px 13px;box-shadow:var(--shadow-sm);
+  display:flex;flex-direction:column;gap:4px;min-width:0;
+  transition:transform 160ms var(--ease),border-color 160ms var(--ease),box-shadow 200ms var(--ease);
+}
+.mth:hover,.case:hover,.pit:hover,.mth:focus-visible,.case:focus-visible,.pit:focus-visible{
+  transform:translateY(-2px);border-color:var(--na,var(--primary));box-shadow:var(--shadow);outline:none;
+}
+.mth.selected,.case.selected,.pit.selected{
+  border-color:var(--na,var(--primary));
+  box-shadow:0 0 0 1px var(--na,var(--primary)),var(--shadow);
+  background:color-mix(in srgb,var(--na,var(--primary)) 5%,#fff);
+}
+.mth-n,.pit-n{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;font-weight:700;color:var(--na,var(--primary));}
+.mth-t,.pit-t{font-family:var(--display);font-size:17px;font-weight:600;color:var(--text-primary);line-height:1.2;}
+.mth-d,.pit-d{font-size:12.5px;line-height:1.45;color:var(--text-secondary);}
+.mth-chips,.case-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px;}
+.chip{
+  font-family:var(--mono);font-size:10.5px;font-variant-numeric:tabular-nums;
+  background:var(--bg-surface-2);border:1px solid var(--border-faint);border-radius:999px;
+  padding:2px 8px;color:var(--text-secondary);white-space:nowrap;
+}
+.chip.need{background:color-mix(in srgb,var(--primary) 8%,#fff);border-color:color-mix(in srgb,var(--primary) 30%,transparent);color:var(--primary);font-weight:700;}
+
+/* ---------- #3.25 Technology matrix ---------- */
+/* Rows are buttons in a grid, not a <table>: each row opens a panel, and a grid keeps
+   the numeric columns aligned while letting the whole strip scroll on a narrow screen. */
+.mx{margin-top:var(--s-md);overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.mx-head,.mx-row{
+  display:grid;grid-template-columns:minmax(180px,1.6fr) repeat(5,minmax(96px,1fr));
+  gap:var(--s-sm);align-items:center;min-width:760px;
+}
+.mx-head{padding:0 14px 8px;border-bottom:1px solid var(--border);}
+.mx-head span{font-family:var(--mono);font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--text-muted);font-weight:700;line-height:1.3;}
+.mx-head small{display:block;font-size:9.5px;letter-spacing:.04em;text-transform:none;color:var(--text-3);font-weight:400;}
+.mx-row{
+  appearance:none;cursor:pointer;text-align:left;font-family:inherit;width:100%;
+  background:var(--bg-surface);border:1px solid var(--border-faint);
+  border-left:3px solid var(--na,var(--primary));border-radius:var(--radius);
+  padding:10px 14px;margin-top:7px;transition:transform 150ms var(--ease),border-color 150ms var(--ease),box-shadow 180ms var(--ease);
+}
+.mx-row:hover,.mx-row:focus-visible{transform:translateX(3px);border-color:var(--na,var(--primary));box-shadow:var(--shadow-sm);outline:none;}
+.mx-row.selected{border-color:var(--na,var(--primary));box-shadow:0 0 0 1px var(--na,var(--primary)),var(--shadow-sm);}
+.mx-c{font-size:12.5px;color:var(--text-secondary);min-width:0;}
+.mx-c.mx-name{font-weight:600;color:var(--text-primary);font-size:13.5px;}
+.mx-c.num{font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:700;color:var(--text-primary);}
+
+/* ---------- #3.26 Case cards and the accuracy ladder ---------- */
+.case-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:var(--s-sm);margin-top:var(--s-md);}
+.case-ind{font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;font-weight:700;color:var(--na,var(--primary));}
+.case-q{font-family:var(--display);font-size:17.5px;font-weight:600;color:var(--text-primary);line-height:1.25;}
+.case-obj{font-size:12px;color:var(--text-secondary);}
+/* The ladder is a comparison strip, not navigation: three steps rising to the right,
+   each one an order of budget rather than a setting. */
+.ladder{margin-top:var(--s-md);background:var(--bg-surface-2);border:1px solid var(--border-faint);border-radius:var(--radius);padding:var(--s-md);display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s-sm);}
+.ladder-step{background:var(--bg-surface);border:1px solid var(--border-muted);border-bottom:3px solid var(--na,var(--primary));border-radius:var(--radius);padding:10px 13px;min-width:0;}
+.ladder-step:nth-child(2){margin-top:-8px;}
+.ladder-step:nth-child(3){margin-top:-16px;}
+.ld-h{display:block;font-family:var(--display);font-size:19px;font-weight:600;color:var(--text-primary);}
+.ld-sub{display:block;font-size:12px;color:var(--text-secondary);line-height:1.4;}
+.ld-n{display:block;margin-top:5px;font-family:var(--mono);font-size:10.5px;font-variant-numeric:tabular-nums;color:var(--na,var(--primary));font-weight:700;}
+.ladder-note{grid-column:1 / -1;margin:2px 0 0;font-size:12px;color:var(--text-muted);line-height:1.5;}
+@media (max-width:760px){
+  .ladder{grid-template-columns:1fr;}
+  .ladder-step:nth-child(2),.ladder-step:nth-child(3){margin-top:0;}
+}
+
+/* ---------- #3.27 Pitfall cards and the pilot checklist ---------- */
+.pit-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:var(--s-sm);margin-top:var(--s-md);}
+/* NOT display:flex on the <li>: the text carries inline term chips, and each chip
+   would become its own flex item on a line that cannot wrap (root DESIGN.md §3.4 lesson).
+   Absolutely positioned counter + padding instead. */
+.checklist{list-style:none;counter-reset:cl;margin:var(--s-sm) 0 0;padding:0;display:flex;flex-direction:column;gap:8px;}
+.checklist li{
+  counter-increment:cl;position:relative;padding:9px 13px 9px 40px;
+  background:var(--bg-surface);border:1px solid var(--border-faint);border-radius:var(--radius);
+  font-size:13px;line-height:1.5;color:var(--text-secondary);
+}
+.checklist li::before{
+  content:counter(cl);position:absolute;left:12px;top:9px;
+  font-family:var(--mono);font-size:11px;font-weight:700;color:#fff;background:var(--primary);
+  width:19px;height:19px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+}
+.checklist li b{color:var(--text-primary);font-weight:600;}
+
+/* ---------- #3.28 Geometry primitives (methods layer) ---------- */
+/* Decorative geometry, deliberately NOT .node: it illustrates a method rather than
+   representing a clickable element, so it carries data-role (hue) and no data-node. */
+.geo-cap{font-family:var(--mono);font-size:11px;letter-spacing:.1em;font-weight:700;fill:var(--text-muted);}
+.geo-div{stroke:var(--border);stroke-width:1;stroke-dasharray:4 5;}
+.geo-arc{fill:none;stroke:var(--border-2);stroke-width:1.2;opacity:.45;}
+.geo-arc.nlos{stroke:var(--c-amber);stroke-dasharray:6 5;opacity:.85;}
+.geo-d{stroke:var(--primary);stroke-width:1.8;stroke-linecap:round;}
+.geo-d.ang{stroke:var(--c-violet);}
+.geo-ang{fill:none;stroke:var(--c-violet);stroke-width:1.6;}
+.geo-lbl{font-family:var(--mono);font-size:13px;font-weight:700;fill:var(--primary);paint-order:stroke;stroke:var(--bg-surface);stroke-width:4;stroke-linejoin:round;}
+.geo-nlos{font-family:var(--font);font-size:12px;fill:var(--accent-warning);font-weight:500;}
+.geo-node circle{fill:color-mix(in srgb,var(--na,var(--primary)) 22%,#fff);stroke:var(--na,var(--primary));stroke-width:2.2;}
+.geo-name{font-family:var(--font);font-size:12.5px;font-weight:600;fill:var(--text-primary);text-anchor:middle;paint-order:stroke;stroke:var(--bg-surface);stroke-width:4.5;stroke-linejoin:round;}
+
+/* ---------- #3.29 Panel lists: decision chain and vendor questions ---------- */
+.chainlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;}
+.chainlist li{display:grid;grid-template-columns:118px 1fr;gap:3px 12px;background:var(--bg-surface-2);border:1px solid var(--border-faint);border-radius:var(--radius);padding:8px 11px;}
+.cl-k{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);font-weight:700;line-height:1.5;}
+.cl-v{font-size:12.5px;line-height:1.45;color:var(--text-secondary);}
+.cl-v b{color:var(--text-primary);font-weight:600;}
+@media (max-width:1120px){.chainlist li{grid-template-columns:1fr;}}
+/* questions, not topics - a question survives a meeting, a topic does not */
+.asklist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px;}
+.asklist li{position:relative;padding-left:20px;font-size:12.5px;line-height:1.5;color:var(--text-secondary);}
+.asklist li::before{content:"?";position:absolute;left:0;top:0;font-family:var(--mono);font-weight:700;color:var(--primary);}
+.asklist li b{color:var(--text-primary);font-weight:600;}
+
+/* ---------- #3.30 Self-test banner ---------- */
+#selftest{display:none;font-family:var(--mono);font-size:12px;line-height:1.65;border-radius:var(--radius-lg);padding:15px 18px;white-space:pre-wrap;margin:var(--s-lg) 0 0;box-shadow:var(--shadow-sm);}
+#selftest.pass{background:var(--accent-fix-weak);border:1px solid color-mix(in srgb,var(--accent-fix) 35%,transparent);color:#0a6b45;}
+#selftest.fail{background:var(--accent-lost-weak);border:1px solid color-mix(in srgb,var(--accent-lost) 35%,transparent);color:#9f1239;}
+
+/* ---------- role hues for the intro comparison cards ---------- */
+.hs-card.role-gnss{--g:var(--text-3);}
+.hs-card.role-uplink{--g:var(--c-indigo);}
+.hs-card.role-downlink{--g:var(--c-teal);}
+
+/* ---------- role hue carrier ----------
+   [data-role] is what actually paints an element by its role; [data-node] above
+   carries identity. A clickable node has both, decorative geometry only data-role -
+   so the hue rules never have to know which layer an element lives on. */
+[data-role="tag"]{--na:var(--c-teal);}
+[data-role="anchor"]{--na:var(--c-blue);}
+[data-role="sync"]{--na:var(--c-cyan);}
+[data-role="engine"]{--na:var(--c-indigo);}
+[data-role="consumer"]{--na:var(--c-emerald);}
+[data-role="method"]{--na:var(--c-violet);}
+[data-role="env"]{--na:var(--c-amber);}
+[data-role="person"]{--na:var(--c-rose);}
+[data-role="event"]{--na:var(--c-fuchsia);}
+
+/* the displaced fix: what an NLOS-inflated measurement actually produces on screen.
+   Hollow amber, linked to the true position by a hairline - the point is that the fix
+   MOVES, and a dashed circle alone does not show where. */
+.geo-ghost circle{fill:#fff;stroke:var(--c-amber);stroke-width:2;stroke-dasharray:3 3;}
+.geo-ghost-link{stroke:var(--c-amber);stroke-width:1;stroke-dasharray:2 4;opacity:.8;}
+.geo-name.ghost{fill:var(--accent-warning);font-weight:500;text-anchor:start;}
+
+/* ---------- #3.31 «Минимальный путь»: сетка 2×2 вместо строки со стрелками ---------- */
+/* Four steps need ~834px; the board is ~800px at every viewport (the 400px panel takes
+   the rest), so the flex row ALWAYS wrapped - and a wrapped row leaves a dangling
+   connector at the end of the first line. A 2×2 grid is deterministic, and the order is
+   carried by the numbers 1-4, which the arrows only duplicated. */
+#panel-intro .chain-flow{display:grid;grid-template-columns:1fr 1fr;gap:var(--s-xs);}
+#panel-intro .chain-arrow{display:none;}
+@media (max-width:560px){#panel-intro .chain-flow{grid-template-columns:1fr;}}
